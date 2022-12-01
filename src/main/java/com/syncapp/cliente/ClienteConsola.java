@@ -34,7 +34,7 @@ public class ClienteConsola {
 
 
     public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {
-        if(args == null || args.length != 4) return;
+        if(args == null || args.length != 5) return;
         
         if(lastParams == null) {
             lastParams = args;
