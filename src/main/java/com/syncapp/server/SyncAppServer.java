@@ -169,7 +169,9 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     @Override
     public ArrayList<Archivo> lista_archivos(TokenUsuario u) throws RemoteException {
         if(!usuariosActivos.contains(u.token)) return null;
-        ArrayList<Archivo> listaRet = Util.listFiles( Paths.get(usersContainers.toString() , u.token ));
+        Path toWalk = Paths.get(usersContainers.toString() , u.token );
+        if(!toWalk.toFile().exists()) return null;
+        ArrayList<Archivo> listaRet = Util.listFiles( toWalk );
         System.out.println("listando archivos de <"+u.token+">"+" cantidad de elementos: "+listaRet.size());
         log("listando archivos de <"+u.token+">"+" -> "+Paths.get(usersContainers.toString() , u.token )+" cantidad de elementos: "+listaRet.size());
         return listaRet;
