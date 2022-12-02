@@ -1,5 +1,7 @@
 import java.io.IOException;
 import java.rmi.NotBoundException;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import com.syncapp.cliente.ClienteConsola;
 
@@ -69,7 +71,8 @@ public class RunClient {
         }
 
         if(usuario == null || usuario.length() <1) {
-            usuario = System.getProperty("user.home");
+            Path tmp = Paths.get(System.getProperty("user.home"));
+            usuario = tmp.getFileName().toString();
         }
 
         if(carpeta == null || carpeta.length() <1) {
