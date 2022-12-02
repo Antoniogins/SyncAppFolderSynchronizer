@@ -74,8 +74,7 @@ public class SyncAppCliente {
         serverIP = args[ARG_IP];
         puerto = Integer.parseInt(args[ARG_PUERTO]);
         user = new TokenUsuario(args[ARG_USUARIO]);
-        workingPath = Paths.get(args[ARG_CARPETA]);
-        
+        setWorkingPath(args[ARG_CARPETA]);
         exec = Executors.newFixedThreadPool(  Integer.parseInt(args[ARG_HILOS])  );
 
 
@@ -100,7 +99,7 @@ public class SyncAppCliente {
     public SyncApp getRemoteServer() { return remoteServer; }
     public TokenUsuario getUsuario() { return user; }
     // public ServicioMonitorizacion getMonitor() { return monitor; }
-    public Path getWorkingPath() { return Paths.get(workingPath.toString()); }//creamos el path asi para que no se pueda modificar el path interno desde el exterior
+    public Path getWorkingPath() { return workingPath; }//creamos el path asi para que no se pueda modificar el path interno desde el exterior
     public int getPort() { return puerto; }
     public String getIP() { return new String(serverIP); }
     public long getTimeOffset() { return timeOffset; }
@@ -145,7 +144,18 @@ public class SyncAppCliente {
 
     public void setWorkingPath(Path workingPath) {
         if(workingPath == null) return;
-        this.workingPath = workingPath;
+
+        if(workingPath.isAbsolute()) {
+            this.workingPath = workingPath;
+        } else {
+            this.workingPath = Paths.get( System.getProperty("user.home") ).resolve(workingPath);
+        }
+
+
+    }
+
+    public void setWorkingPath(String path) {
+        setWorkingPath(Paths.get(path));
     }
 
 

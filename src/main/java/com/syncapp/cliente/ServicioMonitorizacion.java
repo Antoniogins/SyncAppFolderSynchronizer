@@ -24,6 +24,7 @@ public class ServicioMonitorizacion implements Runnable {
     HashMap<Path, WatchKey> pathsRegistrados;
     HashMap<Path, Long> reloj;
     boolean keep;
+    boolean goToSleep;
 
     public ServicioMonitorizacion(SyncAppCliente sac) throws IOException {
         // mejor que lance excepcion, asi el cliente sabe que se ha producido un error y
@@ -37,20 +38,28 @@ public class ServicioMonitorizacion implements Runnable {
         this.watcher = FileSystems.getDefault().newWatchService();
         System.out.println("\niniciando servicio de monitorizacion");
         pathsRegistrados = new HashMap<>();
+        goToSleep = true;
         actualizarCarpetasRegistradas();
     }
 
     public void actualizarCarpetasRegistradas() throws IOException {
 
+        System.out.println(sac.getWorkingPath().toString()); //TESTS
         ArrayList<Path> listaCarpetas = Util.listFolders(sac.getWorkingPath());
         listaCarpetas.forEach(c -> {
 
-            if (!pathsRegistrados.containsKey(c)) {
+            Path pathAbsoluto = sac.getWorkingPath().resolve(c);
+
+            if (!pathsRegistrados.containsKey(pathAbsoluto)) {
                 try {
-                    WatchKey wk = c.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
+
+                    WatchKey wk = pathAbsoluto.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
                             StandardWatchEventKinds.ENTRY_MODIFY);
-                    pathsRegistrados.put(c, wk);
-                    System.out.println("registrado [READ , MODIFY] \"" + c.toString() + "\"");
+
+                    pathsRegistrados.put(pathAbsoluto, wk);
+                    System.out.println("registrado [READ , MODIFY] \"" + pathAbsoluto.toString() + "\"");
+
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -60,28 +69,35 @@ public class ServicioMonitorizacion implements Runnable {
 
     }
 
-    public void observar() {
+
+
+
+    public void observar() throws InterruptedException {
 
         WatchKey key = null;
 
-        // key = watcher.take();
-        key = watcher.poll();
+        if(goToSleep) {
+            key = watcher.take(); //take() se bloquea (duerme) hasta que ocurre un evento
+        } else {
+            key = watcher.poll(); //poll() obtiene las claves modificadas encoladas en ese momento, o null si no
+                                  // hay ninguna.
+        }
 
-        if (key == null) {
+
+        if(key == null) {
             return;
         }
+
 
         for (WatchEvent<?> we : key.pollEvents()) {
 
             WatchEvent.Kind<?> tipoEvento = we.kind();
-
             WatchEvent<Path> observables = (WatchEvent<Path>) we;
-            Path rutaObservada = observables.context();
-            Path rutaAbsoluta = Paths.get(rutaObservada.toString()).toAbsolutePath();
+            Path archivo = (observables.context()).toAbsolutePath();
+            System.out.println("evento " + tipoEvento + " \"" + archivo.toString() + "\"");
 
-            System.out.println("evento " + tipoEvento + " \"" + rutaObservada.toString() + "\"");
 
-            if (rutaObservada.toFile().isDirectory()) {
+            if (archivo.toFile().isDirectory()) {
                 try {
                     actualizarCarpetasRegistradas();
                 } catch (IOException e) {
@@ -92,8 +108,8 @@ public class ServicioMonitorizacion implements Runnable {
             }
 
             // comprobamos si el archivo es un archivo oculto -> estos no se deben
-            // sincronizar
-            String filename = rutaObservada.getFileName().toString();
+            // sincronizar (problemas)
+            String filename = archivo.getFileName().toString();
             System.out.println("prueba 5: nombre="+filename);
 
             if (filename.charAt(0) == '.' || filename.charAt(0) == '~') {
@@ -102,31 +118,37 @@ public class ServicioMonitorizacion implements Runnable {
             }
 
             try {
-                System.out.println("prueba 3: create="+tipoEvento.equals(ENTRY_CREATE)+" modify="+tipoEvento.equals(ENTRY_MODIFY));
-                System.out.println("prueba 4, clases coinciden? -> create="+tipoEvento.getClass().equals(ENTRY_CREATE.getClass())+" modify="+tipoEvento.getClass().equals(ENTRY_MODIFY.getClass()));
 
                 if (tipoEvento.equals(ENTRY_CREATE)  || tipoEvento.equals(ENTRY_MODIFY)) {
-                    System.out.println(
-                            "llegamos a test, con filename=" + filename + " y ruta observada=" + rutaObservada);
-                    // sac.ejecutarOperacion( sac.newArchivoInFolder(rutaObservada), Ops.UPLOAD);
-                    reloj.put(rutaObservada, System.currentTimeMillis());
+                    System.out.println("llegamos a test, con filename=" + filename + " y ruta observada=" + archivo);
 
-                    // esto lo hacemos para que cada vez que el archivo se modifique cambie su
-                    // tiempo, y si la ultima vez que se ha modificado es superior a 20s entonces
-                    // enviamos el archivo, mejoramos en eficiencia
+
+                    // Actualizamos la ultima vez que ha cambiado el archivo observado
+                    reloj.put(archivo, System.currentTimeMillis());
+
+
+                    //Ya que vamos a comprobar a los 20s si el archivo ha vuelto a ser modificado, ponemos que el
+                    // cliente no se vaya a bloquear
+                    goToSleep = false;
+
+
                 } else if (tipoEvento == ENTRY_DELETE) {
                     //TODO si se esta ejecutando el cliente y se elimina un archivo sabemos que ha sido eliminado?
                     throw new IOException(); // TEMPORAL
                 }
+
+
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
 
-
-
             if (!key.reset()) {
                 break;
             }
+
+
+
+
 
 
         }
@@ -139,6 +161,7 @@ public class ServicioMonitorizacion implements Runnable {
 
     public void actualizar() {
 
+        ArrayList<Path> listaDeRelojesABorrarSincronamente = new ArrayList<>();
 
         long actual = System.currentTimeMillis();
         reloj.forEach((a, b) -> { // a=archivo b=tiempo
@@ -149,8 +172,9 @@ public class ServicioMonitorizacion implements Runnable {
                 // un evento , entonces si actualziamos cada vez que semodifica un byte estamos
                 // enviando el resto de bytes redundantemente)
 
-                System.out.println("prueba1:"+a.toFile().exists());
+                System.out.println("prueba1: ruta="+a.toString()+" existe="+a.toFile().exists());
                 if (!a.toFile().exists()) {
+                    listaDeRelojesABorrarSincronamente.add(a);
                     return;
                     // salta esta iteracion, dado que esto se ejecuta asincronamente puede que el
                     // archivo que estaba encolado se haya eliminado antes de que se compruebe su
@@ -161,39 +185,64 @@ public class ServicioMonitorizacion implements Runnable {
 
                 //ACTUALIZAR ESTOOOO
                 try {
+//                    Path relativo = sac.getWorkingPath().relativize(a);
+                    System.out.println("enviando archivo="+a);
                     sac.ejecutarOperacion(new Archivo(a), Ops.UPLOAD);
-                    reloj.remove(a);
+                    listaDeRelojesABorrarSincronamente.add(a);
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         });
+
+        listaDeRelojesABorrarSincronamente.forEach(reloj::remove); //como c -> reloj.remove(c)
+
+
+        if(reloj.isEmpty()) {
+            //Dado que no hay mas relojes de archivo que observar (no queda ningun temporizador) mandamos a dormir
+            goToSleep = true;
+        }
+
+
     }
+
+
+
+
 
     public void dejarDeObservar() {
         pathsRegistrados.forEach((a, b) -> b.cancel());
         pathsRegistrados.clear();
+        keep = false;
     }
+
+
+
+
+
+
 
     @Override
     public void run() {
-        // try {
-        //     actualizarCarpetasRegistradas();
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        // }
-        while (keep) {
-            try {
+        try {
+
+
+            while(keep) {
                 Thread.sleep(2000);
-
-            } catch (InterruptedException e1) {
-
-                e1.printStackTrace();
+                observar();
+                actualizar();
             }
 
-            observar();
-            actualizar();
+
+
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
+
+
+
+
 
 }
