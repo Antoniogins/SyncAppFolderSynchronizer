@@ -16,7 +16,7 @@ public interface SyncApp extends Remote {
     void cerrar_usuario(TokenUsuario u) throws RemoteException;
     ArrayList<Archivo> lista_archivos(TokenUsuario u) throws RemoteException;
     ArrayList<Archivo> obtenerParametrosSimultaneos(TokenUsuario tu, ArrayList<Archivo> lista) throws RemoteException;
-    Archivo obtenerParametros(TokenUsuario tu, Archivo a) throws RemoteException;
+    Archivo obtenerParametrosSingular(TokenUsuario tu, Archivo a) throws RemoteException;
     int abrirArchivo(TokenUsuario tu, Archivo a, String op_mode) throws RemoteException;
     void cerrarArchivo(int id_file) throws RemoteException;
     BloqueBytes leerBloqueBytes(int id_file, long position) throws RemoteException;

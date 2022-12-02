@@ -2,6 +2,7 @@ package com.syncapp.cliente;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.Naming;
@@ -69,6 +70,7 @@ public class SyncAppCliente {
 
         fixedSubRutines = Executors.newFixedThreadPool(2);
 
+        System.out.println("estableciendo parametros");
         serverIP = args[ARG_IP];
         puerto = Integer.parseInt(args[ARG_PUERTO]);
         user = new TokenUsuario(args[ARG_USUARIO]);
@@ -332,16 +334,23 @@ public class SyncAppCliente {
 
         //Obtenemos listas iniciales, sin parametros
         ArrayList<Archivo> local = Util.listFiles(workingPath);
-        local.sort((a,b)-> a.ruta.compareTo(b.ruta));
+        if (local != null) {
+            local.sort((a, b) -> a.ruta.compareTo(b.ruta));
+            System.out.println("tamaño lista local="+local.size()); //TESTS
+            local.forEach(c-> System.out.println(c.ruta)); //TESTS
+        }
+
         ArrayList<Archivo> remota = remoteServer.lista_archivos(user);
-        remota.sort((a,b)-> a.ruta.compareTo(b.ruta));
+        if (remota != null) {
+            remota.sort((a, b) -> a.ruta.compareTo(b.ruta));
+            System.out.println("\ntamaño lista remota="+remota.size()); //TESTS
+            remota.forEach(c-> System.out.println(c.ruta)); //TESTS
+        }
+        
 
 
-
-        System.out.println("tamaño lista local="+local.size()); //TESTS
-        local.forEach(c-> System.out.println(c.ruta)); //TESTS
-        System.out.println("\ntamaño lista remota="+remota.size()); //TESTS
-        remota.forEach(c-> System.out.println(c.ruta)); //TESTS
+        
+        
 
         HashMap<Archivo , Integer> pendientes = Util.operacionesIniciales(local, remota);
 

@@ -118,6 +118,11 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         long len = filepath.toFile().length();
         System.out.println("abriendo file="+file_id+" ruta="+a.toString()+" _"+op_mode+"_ bytes="+len);
         log("abriendo file="+file_id+" ruta="+filepath.toString()+" _"+op_mode+"_ bytes="+len);
+
+
+        
+
+
         archivosActivos.put(file_id, filepath);
         ultimoEnviado.put(file_id, -1);
 
@@ -191,7 +196,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     }
 
     @Override
-    public Archivo obtenerParametros(TokenUsuario tu, Archivo a) throws RemoteException {
+    public Archivo obtenerParametrosSingular(TokenUsuario tu, Archivo a) throws RemoteException {
         if(!usuariosActivos.contains(tu.token) || a == null) {
             return null;
         }

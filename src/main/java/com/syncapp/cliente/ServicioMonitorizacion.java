@@ -63,13 +63,12 @@ public class ServicioMonitorizacion implements Runnable {
     public void observar() {
 
         WatchKey key = null;
-        
 
-        try {
-            key = watcher.take();
+        // key = watcher.take();
+        key = watcher.poll();
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (key == null) {
+            return;
         }
 
         for (WatchEvent<?> we : key.pollEvents()) {
@@ -88,6 +87,7 @@ public class ServicioMonitorizacion implements Runnable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                key.reset();
                 continue;
             }
 
@@ -97,12 +97,14 @@ public class ServicioMonitorizacion implements Runnable {
             System.out.println("prueba 5: nombre="+filename);
 
             if (filename.charAt(0) == '.' || filename.charAt(0) == '~') {
+                key.reset();
                 continue;
             }
 
             try {
                 System.out.println("prueba 3: create="+tipoEvento.equals(ENTRY_CREATE)+" modify="+tipoEvento.equals(ENTRY_MODIFY));
                 System.out.println("prueba 4, clases coinciden? -> create="+tipoEvento.getClass().equals(ENTRY_CREATE.getClass())+" modify="+tipoEvento.getClass().equals(ENTRY_MODIFY.getClass()));
+
                 if (tipoEvento.equals(ENTRY_CREATE)  || tipoEvento.equals(ENTRY_MODIFY)) {
                     System.out.println(
                             "llegamos a test, con filename=" + filename + " y ruta observada=" + rutaObservada);
@@ -120,13 +122,18 @@ public class ServicioMonitorizacion implements Runnable {
                 ioe.printStackTrace();
             }
 
+
+
+            if (!key.reset()) {
+                break;
+            }
+
+
         }
 
-        actualizar();
+        
 
-        if (!key.reset()) {
-
-        }
+        
 
     }
 
@@ -149,6 +156,10 @@ public class ServicioMonitorizacion implements Runnable {
                     // archivo que estaba encolado se haya eliminado antes de que se compruebe su
                     // evento
                 }
+
+
+
+                //ACTUALIZAR ESTOOOO
                 try {
                     sac.ejecutarOperacion(new Archivo(a), Ops.UPLOAD);
                     reloj.remove(a);
@@ -166,11 +177,11 @@ public class ServicioMonitorizacion implements Runnable {
 
     @Override
     public void run() {
-        try {
-            actualizarCarpetasRegistradas();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // try {
+        //     actualizarCarpetasRegistradas();
+        // } catch (IOException e) {
+        //     e.printStackTrace();
+        // }
         while (keep) {
             try {
                 Thread.sleep(2000);
@@ -181,6 +192,7 @@ public class ServicioMonitorizacion implements Runnable {
             }
 
             observar();
+            actualizar();
         }
     }
 

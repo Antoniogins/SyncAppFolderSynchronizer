@@ -1,14 +1,15 @@
 import java.io.IOException;
-import java.rmi.NotBoundException;
-import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.rmi.NotBoundException;
 
-import com.syncapp.cliente.ClienteConsola;
+import com.syncapp.cliente.ClienteCLI;
 
 public class RunClient {
     
     public static void main(String[] args) throws NotBoundException, IOException {
 
+        System.out.println("llego hasta linea 10");
         //args para cliente:
         //  ip
         //  puerto
@@ -25,43 +26,46 @@ public class RunClient {
         boolean executeInConsole = false;
 
 
-        for (int i = 0; i < args.length; i++) {
-            switch(args[i]) {
-
-                case "ip" : {
-                    ip = args[i+1];
-                    i++; //aumentamos otro valor mas porque de args hemos usado el parametro "i" e "i+1"
-                    break;
-                }
-                case "port" : {
-                    puerto = args[i+1];
-                    i++;
-                    break;
-                }
-                case "folder" : {
-                    String rawFolder = args[i+1];
-                    carpeta = (rawFolder.charAt(0) == '"')? rawFolder.substring(1, rawFolder.length()-2) : rawFolder ;
-                    //si la carpeta se introduce como "folder" quitamos las comillas "" -> substring
-                    i++;
-                    break;
-                }
-                case "user" : {
-                    usuario = args[i+1];
-                    i++;
-                    break;
-                }
-                case "threads" : {
-                    hilos = args[i+1];
-                    i++;
-                    break;
-                }
-                case "console" :{
-                    executeInConsole = true;
-                    break;
+        if(args != null) {
+            for (int i = 0; i < args.length; i++) {
+                switch(args[i]) {
+    
+                    case "ip" : {
+                        ip = args[i+1];
+                        i++; //aumentamos otro valor mas porque de args hemos usado el parametro "i" e "i+1"
+                        break;
+                    }
+                    case "port" : {
+                        puerto = args[i+1];
+                        i++;
+                        break;
+                    }
+                    case "folder" : {
+                        String rawFolder = args[i+1];
+                        carpeta = (rawFolder.charAt(0) == '"')? rawFolder.substring(1, rawFolder.length()-2) : rawFolder ;
+                        //si la carpeta se introduce como "folder" quitamos las comillas "" -> substring
+                        i++;
+                        break;
+                    }
+                    case "user" : {
+                        usuario = args[i+1];
+                        i++;
+                        break;
+                    }
+                    case "threads" : {
+                        hilos = args[i+1];
+                        i++;
+                        break;
+                    }
+                    case "console" :{
+                        executeInConsole = true;
+                        break;
+                    }
                 }
             }
+    
         }
-
+        
         if(ip == null || ip.length() <1) {
             ip = "localhost";
         }
@@ -95,9 +99,9 @@ public class RunClient {
         
         //aqui toca pasar los argumentos al controlador
         if(executeInConsole) {
-            ClienteConsola.main(newFixedArgs);
+            ClienteCLI.main(newFixedArgs);
         } else {
-            ClienteConsola.main(newFixedArgs); //ESTE SE CAMBIARA CUANDO TENGAMOS LA INTERFAZ
+            ClienteCLI.main(newFixedArgs); //ESTE SE CAMBIARA CUANDO TENGAMOS LA INTERFAZ
             //ClienteGUI.main(newFixedArgs); //AQUI SE EJECUTARA EL CLIENTE POR CONSOLA
         }
 
