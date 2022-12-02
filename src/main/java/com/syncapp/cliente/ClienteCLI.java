@@ -4,16 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
-import java.nio.file.Path;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 
 import com.syncapp.model.Archivo;
-import com.syncapp.model.TokenUsuario;
-import com.syncapp.utility.Util;
-
-import javax.print.attribute.standard.SheetCollate;
 
 public class ClienteCLI {
 
@@ -146,79 +141,31 @@ public class ClienteCLI {
                     //CADA VEZ QUE EDITEMOS UN PARAMETRO HAY QUE RECORDAR CAMBIAR lastParams
                     case "close" : {
                         System.out.println("cerrando aplicacion");
-                        //sac.cerrarCliente
+                        //sac.cerrarCliente 
                         keepWorking = false;
-
+    
                         break;
                     }
-
-
+    
+    
                     case "reload" : {
-                        main(lastParams);
-                        keepWorking = false;
+                        load(cliente);
                         break;
                     }
 
 
 
                     case "user" : {
-                        cliente.setUser(new TokenUsuario(sentencia[1]));
-                        lastParams[SyncAppCliente.ARG_USUARIO] = sentencia[1];
-                        break;
-                    }
-
-                    case "ip" : {
-                        cliente.setServerIP(sentencia[1]);
-                        cliente.setPuerto(Short.parseShort(sentencia[2]));
-                        lastParams[SyncAppCliente.ARG_IP] = sentencia[1];
-                        lastParams[SyncAppCliente.ARG_PUERTO] = sentencia[2];
-                        break;
-                    }
-
-                    case "threads" : {
-                        lastParams[SyncAppCliente.ARG_HILOS] = sentencia[1];
-                        break;
-                    }
-
-                    case "folder" : {
-                        cliente.setWorkingPath (Path.of(sentencia[1]));
-                        lastParams[SyncAppCliente.ARG_CARPETA] = sentencia[1];
-                        break;
-                    }
-
-                    case "sincronizar" : {
-                        load(cliente);
+    
                         break;
                     }
 
 
-                    case "delete" : {
-                        break;
-                    }
+                    
 
-                    case "list" : {
-                        Util.listFiles(cliente.getWorkingPath()).forEach(System.out::println);
-                        for (String s : sentencia) {
-                            if (sentencia[1].charAt(0) == 'l') {
-                                //.listFolders(cliente.getWorkingPath());
-                            }
-                            else if (sentencia[1].charAt((0)) == 'r') {
-                                Util.listFolders(cliente.getWorkingPath());
-                            }
-
-                            else if (sentencia[1].charAt((0)) == 'i') {
-                                //
-                            }
-                        }
-
-
-
-                        break;
-                    }
 
                     default : {
-                        System.out.println("comando desconocido, intenta de nuevo ... ");
-                        break;
+                        System.out.println("comando desconocido, introduce help para mostrar los comandos disponibles");
                     }
                     
     

@@ -63,7 +63,6 @@ public class SyncAppCliente {
 
 
 
-
     //Constructores
     public SyncAppCliente(String[] args) {
         if(args == null || args.length != 5) return;
@@ -84,6 +83,19 @@ public class SyncAppCliente {
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
     //GETTERS
     public SyncApp getRemoteServer() { return remoteServer; }
     public TokenUsuario getUsuario() { return user; }
@@ -92,6 +104,21 @@ public class SyncAppCliente {
     public int getPort() { return puerto; }
     public String getIP() { return new String(serverIP); }
     public long getTimeOffset() { return timeOffset; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     //SETTERS
@@ -413,6 +440,47 @@ public class SyncAppCliente {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
     
 }
