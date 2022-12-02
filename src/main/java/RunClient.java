@@ -105,9 +105,6 @@ public class RunClient {
             //ClienteGUI.main(newFixedArgs); //AQUI SE EJECUTARA EL CLIENTE POR CONSOLA
         }
 
-
-
-
     }
     
 }

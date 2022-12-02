@@ -107,8 +107,6 @@ public class Upload implements Runnable{
 
         }
 
-        
-
         try {
             server.cerrarArchivo(id_file);
         } catch (RemoteException e) {
