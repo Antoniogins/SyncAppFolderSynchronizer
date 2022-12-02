@@ -68,6 +68,10 @@ public class ClienteCLI {
 
 
 
+
+
+
+
         // Comenzamos a comparar que archivos hay que sincronizar
         // Primero obtenemos una lista con los archivos que no tienen presencia local o
         // remota, ya que sabemos que estos los tenemos que sincronizar.
