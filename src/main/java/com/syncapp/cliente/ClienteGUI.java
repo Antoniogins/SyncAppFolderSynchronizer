@@ -33,9 +33,7 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 
 
-
-
-		Container contenedor = getContentPane();
+		Container contenedor = super.getContentPane();
 		contenedor.setLayout(new BorderLayout());
 
 
@@ -91,7 +89,7 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 		//Esto siempre hay que ponerlo
 
-		setTitle ("Ponte titulo");
+		setTitle ("SyncAppGUI");
 		setSize (800,800);
 		setVisible(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
