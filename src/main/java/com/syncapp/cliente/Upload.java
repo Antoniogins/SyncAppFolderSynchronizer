@@ -17,7 +17,6 @@ public class Upload implements Runnable{
     SyncApp server;
     int id_file;
     Archivo ruta;
-    String pathlocal;
     Path abs;
     TokenUsuario tu;
     LectorArchivos la;
@@ -25,10 +24,16 @@ public class Upload implements Runnable{
 
     public Upload(SyncApp server, Archivo ruta, String pathlocal, TokenUsuario tu) throws IOException {
         this.server = server;
-        this.ruta = ruta;
-        this.pathlocal = pathlocal;
         this.tu = tu;
-        this.abs = Paths.get(pathlocal.toString() , ruta.ruta);
+
+        Path path = Paths.get(ruta.ruta);
+        Path wfold = Paths.get(pathlocal);
+        this.ruta = new Archivo( path , wfold);
+        this.abs = wfold;
+        this.abs = wfold.resolve(path);
+
+
+
         this.la = new LectorArchivos(abs, "r");
         ultimo_enviado = -1; //Todavia no se ha enviado ninguno
     }

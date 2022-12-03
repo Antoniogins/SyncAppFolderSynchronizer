@@ -21,10 +21,12 @@ public class ServicioMonitorizacion implements Runnable {
 
     SyncAppCliente sac;
     WatchService watcher;
-    HashMap<Path, WatchKey> pathsRegistrados;
-    HashMap<Path, Long> reloj;
+    HashMap< WatchKey, Path> pathsRegistrados;
+    HashMap< Path, Long> reloj;
     boolean keep;
     boolean goToSleep;
+
+    boolean containsPath;
 
     public ServicioMonitorizacion(SyncAppCliente sac) throws IOException {
         // mejor que lance excepcion, asi el cliente sabe que se ha producido un error y
@@ -44,19 +46,28 @@ public class ServicioMonitorizacion implements Runnable {
 
     public void actualizarCarpetasRegistradas() throws IOException {
 
-        System.out.println(sac.getWorkingPath().toString()); //TESTS
+        System.out.println("working path="+sac.getWorkingPath().toString()); //TESTS
         ArrayList<Path> listaCarpetas = Util.listFolders(sac.getWorkingPath());
         listaCarpetas.forEach(c -> {
 
             Path pathAbsoluto = sac.getWorkingPath().resolve(c);
 
-            if (!pathsRegistrados.containsKey(pathAbsoluto)) {
+            containsPath = false;
+
+            pathsRegistrados.forEach( (a,b) -> {
+                if(  pathAbsoluto.toString().equals(b.toString())  ) {
+                    containsPath = true;
+                    return;
+                }
+            });
+
+            if (!containsPath) {
                 try {
 
                     WatchKey wk = pathAbsoluto.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
                             StandardWatchEventKinds.ENTRY_MODIFY);
 
-                    pathsRegistrados.put(pathAbsoluto, wk);
+                    pathsRegistrados.put(wk, pathAbsoluto);
                     System.out.println("registrado [READ , MODIFY] \"" + pathAbsoluto.toString() + "\"");
 
 
@@ -93,10 +104,21 @@ public class ServicioMonitorizacion implements Runnable {
 
             WatchEvent.Kind<?> tipoEvento = we.kind();
             WatchEvent<Path> observables = (WatchEvent<Path>) we;
-            Path archivo = (observables.context()).toAbsolutePath();
+
+
+
+            Path carpetaPadre = pathsRegistrados.get(key);
+            System.out.println("carpeta padre=\""+carpetaPadre.toString()+"\"");
+            Path archivo = carpetaPadre.resolve(observables.context());
+            System.out.println("ruta del archivo modificado=\""+archivo.toString());
+
+
+
             System.out.println("evento " + tipoEvento + " \"" + archivo.toString() + "\"");
 
 
+
+            //Si el evento que ha ocurrido es un directorio, actualizamos carpetas y reseteamos la clave
             if (archivo.toFile().isDirectory()) {
                 try {
                     actualizarCarpetasRegistradas();
@@ -107,20 +129,27 @@ public class ServicioMonitorizacion implements Runnable {
                 continue;
             }
 
+
+
+
+
             // comprobamos si el archivo es un archivo oculto -> estos no se deben
             // sincronizar (problemas)
             String filename = archivo.getFileName().toString();
-            System.out.println("prueba 5: nombre="+filename);
-
             if (filename.charAt(0) == '.' || filename.charAt(0) == '~') {
                 key.reset();
                 continue;
             }
 
+
+
+
+
+
             try {
 
                 if (tipoEvento.equals(ENTRY_CREATE)  || tipoEvento.equals(ENTRY_MODIFY)) {
-                    System.out.println("llegamos a test, con filename=" + filename + " y ruta observada=" + archivo);
+                    System.out.println("llegamos a test, con archivo=\"" + archivo + "\"");
 
 
                     // Actualizamos la ultima vez que ha cambiado el archivo observado
@@ -187,7 +216,7 @@ public class ServicioMonitorizacion implements Runnable {
                 try {
 //                    Path relativo = sac.getWorkingPath().relativize(a);
                     System.out.println("enviando archivo="+a);
-                    sac.ejecutarOperacion(new Archivo(a), Ops.UPLOAD);
+                    sac.ejecutarOperacion(new Archivo(a , sac.getWorkingPath()) , Ops.UPLOAD);
                     listaDeRelojesABorrarSincronamente.add(a);
 
                 } catch (IOException e) {
@@ -212,7 +241,7 @@ public class ServicioMonitorizacion implements Runnable {
 
 
     public void dejarDeObservar() {
-        pathsRegistrados.forEach((a, b) -> b.cancel());
+        pathsRegistrados.forEach((a, b) -> a.cancel());
         pathsRegistrados.clear();
         keep = false;
     }

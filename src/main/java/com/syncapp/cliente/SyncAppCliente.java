@@ -362,7 +362,7 @@ public class SyncAppCliente {
         
         
 
-        HashMap<Archivo , Integer> pendientes = Util.operacionesIniciales(local, remota);
+        HashMap<Archivo , Integer> pendientes = Util.operacionesIniciales(local, remota, workingPath);
 
         return ejectuarOperaciones(pendientes);
     }
@@ -373,8 +373,15 @@ public class SyncAppCliente {
         if(pendientes == null || pendientes.size() < 1) return null;
 
         ArrayList<Archivo> local = Util.obtenerParametrosSimultaneos(pendientes, workingPath);
+
+        System.out.println("info local");
+        local.forEach(System.out::println);
+
         ArrayList<Archivo> remota = remoteServer.obtenerParametrosSimultaneos(user, pendientes);
-        HashMap< Archivo, Integer> operaciones = Util.compararParametrosSimultaneos(local, remota, timeOffset);
+
+        System.out.println("info remota");
+        remota.forEach(System.out::println);
+        HashMap< Archivo, Integer> operaciones = Util.compararParametrosSimultaneos(local, remota, timeOffset, workingPath);
         
         if(operaciones == null || operaciones.size() == 0) return null;
 

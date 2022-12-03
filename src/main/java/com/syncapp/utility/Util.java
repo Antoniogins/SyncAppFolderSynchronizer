@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.rmi.RemoteException;
@@ -59,7 +60,7 @@ public class Util {
                 Path m = pathToList.relativize(c);
                 
                 if (c.toFile().isFile() && c.toFile().length() > 0){
-                    lista.add(new Archivo(m.toString()));
+                    lista.add(new Archivo(m , pathToList));
                 }
                 
             });
@@ -99,13 +100,13 @@ public class Util {
 
     }
 
-    public static Archivo getParameters(Archivo a, Path containerFolder) throws IOException {
+    public static Archivo getParameters(Archivo a, Path workingFolder) throws IOException {
         
-        Archivo deVuelta = new Archivo(a.ruta);
+        Archivo deVuelta = new Archivo(  a.toRelativePath(), workingFolder);
         
-        deVuelta.hash = checkSumhash( deVuelta.toFile(containerFolder) );
+        deVuelta.hash = checkSumhash( deVuelta.toFile() );
         
-        FileTime ft = Files.getLastModifiedTime( deVuelta.toPath(containerFolder) );
+        FileTime ft = Files.getLastModifiedTime( deVuelta.toPath() );
         deVuelta.timeMilisLastModified = ft.toMillis();
 
         return deVuelta;
@@ -213,7 +214,7 @@ public class Util {
 
 
     //ESTA SOLO COMPARA PRESENCIA LOCAL O REMOTA, TA BIEN PARA OPTIMIZAR 
-    public static HashMap<Archivo , Integer> operacionesIniciales(ArrayList<Archivo> local, ArrayList<Archivo> remoto) {
+    public static HashMap<Archivo , Integer> operacionesIniciales(ArrayList<Archivo> local, ArrayList<Archivo> remoto, Path workginPath) {
         if(   (local == null || local.size() < 1) && (remoto == null || remoto.size() < 1)  ) return null;
 
 
@@ -262,13 +263,13 @@ public class Util {
 
             //Primero comparamos si un archivo esta presente unicamente en local o en remoto
             if(b.presentInLocal && !b.presentInRemote) {
-                operacionesMixtas.put(new Archivo(a), Ops.UPLOAD); //Presente en local y no presente en remoto -> subir archivo
+                operacionesMixtas.put(new Archivo( Paths.get(a) , workginPath), Ops.UPLOAD); //Presente en local y no presente en remoto -> subir archivo
 
             } else if(!b.presentInLocal && b.presentInRemote) {
-                operacionesMixtas.put(new Archivo(a), Ops.DOWNLOAD); //Presente en remoto y no presente en local -> descargar archivo
+                operacionesMixtas.put(new Archivo( Paths.get(a) , workginPath), Ops.DOWNLOAD); //Presente en remoto y no presente en local -> descargar archivo
 
             } else if(b.presentInLocal && b.presentInRemote) {
-                operacionesMixtas.put(new Archivo(a), Ops.MORE_INFO);
+                operacionesMixtas.put(new Archivo( Paths.get(a) , workginPath), Ops.MORE_INFO);
 
             }
         });
@@ -277,7 +278,7 @@ public class Util {
     }
 
 
-    public static HashMap< Archivo, Integer> compararParametrosSimultaneos(ArrayList<Archivo> local, ArrayList<Archivo> remoto, long offset) {
+    public static HashMap< Archivo, Integer> compararParametrosSimultaneos(ArrayList<Archivo> local, ArrayList<Archivo> remoto, long offset, Path workingPath) {
         HashMap<Archivo , Integer> operaciones = new HashMap<>();
 
         if(remoto == null || remoto.size() == 0) {
@@ -318,9 +319,9 @@ public class Util {
 
             if(!b.hashLocal.equals(b.hashRemoto)) {
                 if(b.timeMilisLocal < b.timeMilisRemote) {
-                    operaciones.put(new Archivo(a), Ops.DOWNLOAD);
+                    operaciones.put(new Archivo( Paths.get(a) , workingPath), Ops.DOWNLOAD);
                 } else {
-                    operaciones.put(new Archivo(a), Ops.UPLOAD);
+                    operaciones.put(new Archivo( Paths.get(a) , workingPath), Ops.UPLOAD);
                 }
             }
 

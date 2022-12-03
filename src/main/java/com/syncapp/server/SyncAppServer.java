@@ -175,7 +175,9 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     public ArrayList<Archivo> lista_archivos(TokenUsuario u) throws RemoteException {
         if(!usuariosActivos.contains(u.token)) return null;
         Path toWalk = Paths.get(usersContainers.toString() , u.token );
+
         if(!toWalk.toFile().exists()) return null;
+
         ArrayList<Archivo> listaRet = Util.listFiles( toWalk );
         System.out.println("listando archivos de <"+u.token+">"+" cantidad de elementos: "+listaRet.size());
         log("listando archivos de <"+u.token+">"+" -> "+Paths.get(usersContainers.toString() , u.token )+" cantidad de elementos: "+listaRet.size());
@@ -190,6 +192,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
             return null;
         }
 
+        System.out.println(Paths.get(usersContainers.toString() , tu.token));
         log("obteniendo parametros de archivos pedidos");
         return Util.obtenerParametrosSimultaneos(lista, Paths.get(usersContainers.toString() , tu.token));
         

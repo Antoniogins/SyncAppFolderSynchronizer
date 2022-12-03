@@ -18,18 +18,21 @@ public class Download implements Runnable {
     SyncApp server;
     int id_file;
     Archivo ruta;
-    String pathlocal;
     Path abs;
-    TokenUsuario tu;
+    TokenUsuario usuario;
     LectorArchivos la;
     int ultimo_recibido;
 
-    public Download(SyncApp server, final Archivo ruta, String pathlocal, TokenUsuario tu) throws IOException {
+    public Download(SyncApp server, Archivo ruta, String pathlocal, TokenUsuario usuario) throws IOException {
         this.server = server;
-        this.ruta = ruta;
-        this.pathlocal = pathlocal;
-        this.tu = tu;
-        this.abs = Paths.get(pathlocal.toString() , ruta.ruta);
+        this.usuario = usuario;
+
+        Path path = Paths.get(ruta.ruta);
+        Path wfold = Paths.get(pathlocal);
+        this.ruta = new Archivo( path , wfold);
+        this.abs = wfold.resolve(path);
+
+
         this.la = new LectorArchivos(abs, "rw");
         ultimo_recibido = -1; //Replica de upload
     }
@@ -37,7 +40,7 @@ public class Download implements Runnable {
 
     public void run() {
         try {
-            id_file = server.abrirArchivo(tu, ruta, "r");
+            id_file = server.abrirArchivo(usuario, ruta, "r");
             // System.out.println("id_File"+id_file);
         } catch (RemoteException e1) {
             e1.printStackTrace();
