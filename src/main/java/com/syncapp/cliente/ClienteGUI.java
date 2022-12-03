@@ -91,6 +91,7 @@ public class ClienteGUI extends JFrame implements ActionListener {
 		setTitle ("Ponte titulo");
 		setSize (800,800);
 		setVisible(true);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 	}
 
@@ -101,6 +102,12 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 
 		if(origen == bservidor) {
+
+			System.out.println("funciona boton servidor");
+
+
+
+
 			bservidor.add(pop_servidor);
 			pop_servidor.add(String.valueOf(ip));
 			JLabel ip = new JLabel ("Introduce la ip del servidor");
@@ -113,6 +120,8 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 		}
 		else if(origen == bcarpetalocal) {
+
+			System.out.println("funciona boto carpeta local");
 			bcarpetalocal.add(pop_carpeta_local);
 			pop_carpeta_local.add(String.valueOf(carpetalocal));
 			JLabel carpetalocal = new JLabel("Selecciona la carpeta local que quieres sincronizar");
@@ -121,6 +130,11 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 		}
 		else if(origen == bcarpetaremota) {
+
+			System.out.println("funciona boton carpeta remota");
+
+
+
 			pop_carpeta_remota.add(String.valueOf(carpetaremota));
 			JLabel carpetaremota = new JLabel ("Introduce la carpeta remota que quieres sincrinzar");
 			ip.add(new JTextField(200));
@@ -129,6 +143,11 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 		}
 		else if(origen == busuario) {
+
+
+			System.out.println("funciona boton usuario");
+
+
 			busuario.add(pop_usuario);
 			pop_usuario.add(String.valueOf(usuario));
 			JLabel usuario = new JLabel ("Introduce tu usuario");
@@ -140,10 +159,20 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 		}
 		else if(origen == brestart) {
+
+			System.out.println("funciona boton restart");
+
+
 			//sac.restart;
 
 		}
 		else if(origen == bejecutar) {
+
+			System.out.println("funciona boton ejecutar");
+
+
+
+
 			//sa.ejecutar;
 		}
 
