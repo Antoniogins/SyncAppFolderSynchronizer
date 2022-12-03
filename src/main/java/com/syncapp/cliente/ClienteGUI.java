@@ -35,9 +35,6 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 
 
-
-
-
 		Container contenedor = getContentPane();
 		contenedor.setLayout(new BorderLayout());
 
@@ -50,10 +47,14 @@ public class ClienteGUI extends JFrame implements ActionListener {
 		JPanel pinformacion = new JPanel(new BorderLayout());
 		pcentral.add(pinformacion);
 
+
+
+
+
+
 		//creamos los botones y los añadimos al panel
 		bservidor = new JButton ("Seleccionar servidor");
 		bservidor.addActionListener(this);
-
 
 		busuario = new JButton ("Seleccionar usuario");
 		busuario.addActionListener(this);
@@ -66,8 +67,10 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 		bejecutar = new JButton ("Ejecutar");
 		bejecutar.addActionListener(this);
+
 		brestart = new JButton ("Restart");
 		brestart.addActionListener(this);
+
 
 
 		pbotones.add(bservidor);
@@ -105,16 +108,34 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 			System.out.println("funciona boton servidor");
 
+			JTextField direccionIP = new JTextField("localhost");
+			JTextField puerto = new JTextField("1099");
+
+			JPanel inputPanel = new JPanel();
+			inputPanel.add(new JLabel("direccion IP: "));
+			inputPanel.add(direccionIP);
+			inputPanel.add(Box.createHorizontalStrut(15)); // a spacer
+			inputPanel.add(new JLabel("puerto: "));
+			inputPanel.add(puerto);
+
+			int result = JOptionPane.showConfirmDialog(null, inputPanel,
+					"introduce direccion ip y puerto", JOptionPane.OK_CANCEL_OPTION);
+			if (result == JOptionPane.OK_OPTION) {
+				System.out.println("x value: " + direccionIP.getText());
+				System.out.println("y value: " + puerto.getText());
+			}
 
 
 
-			bservidor.add(pop_servidor);
-			pop_servidor.add(String.valueOf(ip));
-			JLabel ip = new JLabel ("Introduce la ip del servidor");
-			ip.add(new JTextField(15));
-			pop_servidor.add(String.valueOf(puerto));
-			JLabel puerto = new JLabel ("Introduce el puerto del servidor");
-			ip.add(new JTextField(15));
+//			bservidor.add(pop_servidor);
+//			pop_servidor.add(String.valueOf(ip));
+
+
+//			JLabel ip = new JLabel ("Introduce la ip del servidor");
+//			ip.add(new JTextField(15));
+//			pop_servidor.add(String.valueOf(puerto));
+//			JLabel puerto = new JLabel ("Introduce el puerto del servidor");
+//			ip.add(new JTextField(15));
 			//obtener IP y pasarla como parametro
 			//sac.restart
 
