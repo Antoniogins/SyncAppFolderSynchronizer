@@ -4,6 +4,7 @@ import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 
 import com.syncapp.cliente.ClienteCLI;
+import com.syncapp.cliente.ClienteGUI;
 
 public class RunClient {
     
@@ -23,43 +24,37 @@ public class RunClient {
         String carpeta = null;
         String hilos = null;
 
-        boolean executeInConsole = false;
+        boolean executeInGUI = false;
 
 
         if(args != null) {
-            for (int i = 0; i < args.length; i++) {
-                switch(args[i]) {
-    
-                    case "ip" : {
-                        ip = args[i+1];
-                        i++; //aumentamos otro valor mas porque de args hemos usado el parametro "i" e "i+1"
-                        break;
+            for (int i = 0; i < args.length; ) {
+                switch (args[i]) {
+                    case "ip" -> {
+                        ip = args[i + 1];
+                        i += 2; //aumentamos otro valor mas porque de args hemos usado el parametro "i" e "i+1"
                     }
-                    case "port" : {
-                        puerto = args[i+1];
-                        i++;
-                        break;
+                    case "port" -> {
+                        puerto = args[i + 1];
+                        i += 2;
                     }
-                    case "folder" : {
-                        String rawFolder = args[i+1];
-                        carpeta = (rawFolder.charAt(0) == '"')? rawFolder.substring(1, rawFolder.length()-2) : rawFolder ;
+                    case "folder" -> {
+                        String rawFolder = args[i + 1];
+                        carpeta = (rawFolder.charAt(0) == '"') ? rawFolder.substring(1, rawFolder.length() - 2) : rawFolder;
                         //si la carpeta se introduce como "folder" quitamos las comillas "" -> substring
-                        i++;
-                        break;
+                        i += 2;
                     }
-                    case "user" : {
-                        usuario = args[i+1];
-                        i++;
-                        break;
+                    case "user" -> {
+                        usuario = args[i + 1];
+                        i += 2;
                     }
-                    case "threads" : {
-                        hilos = args[i+1];
-                        i++;
-                        break;
+                    case "threads" -> {
+                        hilos = args[i + 1];
+                        i += 2;
                     }
-                    case "console" :{
-                        executeInConsole = true;
-                        break;
+                    case "gui" -> {
+                        executeInGUI = true;
+                        i += 1;
                     }
                 }
             }
@@ -98,8 +93,8 @@ public class RunClient {
 
         
         //aqui toca pasar los argumentos al controlador
-        if(executeInConsole) {
-            ClienteCLI.main(newFixedArgs);
+        if(executeInGUI) {
+            ClienteGUI interfaz = new ClienteGUI(args);
         } else {
             ClienteCLI.main(newFixedArgs); //ESTE SE CAMBIARA CUANDO TENGAMOS LA INTERFAZ
             //ClienteGUI.main(newFixedArgs); //AQUI SE EJECUTARA EL CLIENTE POR CONSOLA

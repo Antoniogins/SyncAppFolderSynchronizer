@@ -6,13 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="50e8eb93-129d-4855-bc1d-8f11155dc7ff" name="Changes" comment="simple test commit">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Download.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Download.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ServicioMonitorizacion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ServicioMonitorizacion.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/SyncAppCliente.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/SyncAppCliente.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Upload.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Upload.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/model/Archivo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/model/Archivo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/server/SyncAppServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/server/SyncAppServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Util.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Util.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/RunClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/RunClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteCLI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteCLI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteGUI.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,7 +65,7 @@
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "preferences.keymap"
+    "settings.editor.selected.configurable": "preferences.lookFeel"
   }
 }]]></component>
   <component name="RunManager">

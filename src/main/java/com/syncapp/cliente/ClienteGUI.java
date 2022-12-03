@@ -10,7 +10,7 @@ import java.awt.event.ActionListener;
 public class ClienteGUI extends JFrame implements ActionListener {
 
 	// Variables
-	private SyncAppCliente sac;
+	private SyncAppCliente cliente;
 	private JLabel label_informacion, label_info_velocidad;
 
 	private JLabel ip, puerto, usuario, password, carpetalocal, carpetaremota;
@@ -20,12 +20,23 @@ public class ClienteGUI extends JFrame implements ActionListener {
 	private PopupMenu pop_servidor, pop_usuario, pop_carpeta_local, pop_carpeta_remota, pop_restart, pop_ejecutar;
 
 	// Al constructor de la clase vista le pasamos el cliente
-	public ClienteGUI(SyncAppCliente sac) {
-		super("Cliente SyncApp");
-		if (sac == null)
-			return;
 
-		this.sac = sac;
+
+
+
+
+	public ClienteGUI(String[] args) {
+		super("Cliente SyncApp");
+
+		//Iniciamos en primer lugar el servidor
+		cliente = new SyncAppCliente(args);
+
+
+
+
+
+
+
 
 		Container contenedor = getContentPane();
 		contenedor.setLayout(new BorderLayout());
@@ -139,6 +150,9 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 
 	}
+
+
+
 
 
 

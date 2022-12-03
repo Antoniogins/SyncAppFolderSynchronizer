@@ -118,114 +118,82 @@ public class ClienteCLI {
                 String[] sentencia = line.split(":");
     
                 //Introducimos los comandos como "comando:algo mas"
-    
-    
-                switch(sentencia[0]) {
-    
-                    //TODO terminarlo
-                    case "help" : {
-                        String helped = 
-                            "\ncomandos disponibles: "+
-                            "\n\tclose         ->  cierra la aplicacion  "+
-                            "\n\treload        ->  vuelve a sincronizar las carpetas desde cero  "+
-                            "\n\tuser:value    ->  cambia de usuario a valor \"value\"  "+
-                            "\n\tip:a.b.c.d:p  ->  establece una nueva ip de servidor (puerto se puede omitir, 1099 por defecto)"+
-                            "\n\tthreads:n     ->  establece a \"n\" el maximo de archivos transferibles simultaneamente"+
-                            "\n\tfolder:value  ->  cambia la carpeta a transferir"+
-                            "\n\tsincronizar   ->  ejecuta el Algoritmo de Cristian para refrescar el TimeOffset"+
-                            "\n\tdelete:file   ->  borra file en cliente y servidor"+
-                            "\n\tlist:lri      ->  muestra una lista con los archivos de la siguiente forma:"+
-                            "\n\t                        -l: lista de archivos remotos"+
-                            "\n\t                        -r: lista de archivos locales"+
-                            "\n\t                        -i: mostrar informacion (hash, ultima modificacion)"+
-                            "\n\t                  para ello escriba las letras de la informacion que quiera mostrar"+
-                            "\n\thelp          ->  muestra este texto xD  "
 
-                        ;
+
+                switch (sentencia[0]) {
+
+                    //TODO terminarlo
+                    case "help" -> {
+                        String helped =
+                                "\ncomandos disponibles: " +
+                                        "\n\tclose         ->  cierra la aplicacion  " +
+                                        "\n\treload        ->  vuelve a sincronizar las carpetas desde cero  " +
+                                        "\n\tuser:value    ->  cambia de usuario a valor \"value\"  " +
+                                        "\n\tip:a.b.c.d:p  ->  establece una nueva ip de servidor (puerto se puede omitir, 1099 por defecto)" +
+                                        "\n\tthreads:n     ->  establece a \"n\" el maximo de archivos transferibles simultaneamente" +
+                                        "\n\tfolder:value  ->  cambia la carpeta a transferir" +
+                                        "\n\tsincronizar   ->  ejecuta el Algoritmo de Cristian para refrescar el TimeOffset" +
+                                        "\n\tdelete:file   ->  borra file en cliente y servidor" +
+                                        "\n\tlist:lri      ->  muestra una lista con los archivos de la siguiente forma:" +
+                                        "\n\t                        -l: lista de archivos remotos" +
+                                        "\n\t                        -r: lista de archivos locales" +
+                                        "\n\t                        -i: mostrar informacion (hash, ultima modificacion)" +
+                                        "\n\t                  para ello escriba las letras de la informacion que quiera mostrar" +
+                                        "\n\thelp          ->  muestra este texto xD  ";
                         System.out.println(helped);
-                        break;
                     }
 
 
                     //CADA VEZ QUE EDITEMOS UN PARAMETRO HAY QUE RECORDAR CAMBIAR lastParams
-                    case "close" : {
+                    case "close" -> {
                         System.out.println("cerrando aplicacion");
                         //sac.cerrarCliente
                         keepWorking = false;
 
-                        break;
                     }
-
-
-                    case "reload" : {
+                    case "reload" -> {
                         main(lastParams);
                         keepWorking = false;
-                        break;
                     }
-
-
-
-                    case "user" : {
+                    case "user" -> {
                         cliente.setUser(new TokenUsuario(sentencia[1]));
                         lastParams[SyncAppCliente.ARG_USUARIO] = sentencia[1];
-                        break;
                     }
-
-                    case "ip" : {
+                    case "ip" -> {
                         cliente.setServerIP(sentencia[1]);
                         cliente.setPuerto(Short.parseShort(sentencia[2]));
                         lastParams[SyncAppCliente.ARG_IP] = sentencia[1];
                         lastParams[SyncAppCliente.ARG_PUERTO] = sentencia[2];
-                        break;
                     }
-
-                    case "threads" : {
+                    case "threads" -> {
                         lastParams[SyncAppCliente.ARG_HILOS] = sentencia[1];
-                        break;
                     }
-
-                    case "folder" : {
-                        cliente.setWorkingPath (Path.of(sentencia[1]));
+                    case "folder" -> {
+                        cliente.setWorkingPath(Path.of(sentencia[1]));
                         lastParams[SyncAppCliente.ARG_CARPETA] = sentencia[1];
-                        break;
                     }
-
-                    case "sincronizar" : {
+                    case "sincronizar" -> {
                         load(cliente);
-                        break;
                     }
-
-
-                    case "delete" : {
-                        break;
+                    case "delete" -> {
                     }
-
-                    case "list" : {
+                    case "list" -> {
                         Util.listFiles(cliente.getWorkingPath()).forEach(System.out::println);
                         for (String s : sentencia) {
                             if (sentencia[1].charAt(0) == 'l') {
                                 //.listFolders(cliente.getWorkingPath());
-                            }
-                            else if (sentencia[1].charAt((0)) == 'r') {
+                            } else if (sentencia[1].charAt((0)) == 'r') {
                                 Util.listFolders(cliente.getWorkingPath());
-                            }
-
-                            else if (sentencia[1].charAt((0)) == 'i') {
+                            } else if (sentencia[1].charAt((0)) == 'i') {
                                 //
                             }
                         }
 
 
-
-                        break;
                     }
-
-                    default : {
+                    default -> {
                         System.out.println("comando desconocido, intenta de nuevo ... ");
-                        break;
                     }
-                    
-    
                 }
     
 
