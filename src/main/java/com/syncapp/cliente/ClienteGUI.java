@@ -4,7 +4,7 @@ import java.awt.*;
 import javax.swing.*;
 
 import com.syncapp.server.SyncAppServer;
-import com.syncapp.utility.Util;
+import com.syncapp.utility.Utilidades;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

@@ -1,3 +1,5 @@
+package run;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,7 +48,7 @@ public class RunClient {
      *              el programa fallará.
      *              <br>
      *              Si la ruta indicada no es una ruta absoluta (que no comienza desde el directorio raiz "C:" o "/")
-     *              se supondra que la carpeta indicada es una carpeta dentro del directorio del usuario ("C:\Users\usuario\foldPath" o "/home/usuario/foldPath").
+     *              se supondra que la carpeta indicada es una carpeta dentro del directorio del usuario ( $ruta_usuario/foldPath -> windows:  "C:\Users\ usuario\foldPath" , linux/macos: "/home/usuario/foldPath").
      *              <br>
      *              El valor por defecto es <i>"$ruta_usuario/syncappshared"</i>.
      *          </li>
@@ -54,11 +56,11 @@ public class RunClient {
      *              <b>user username</b> -> para indicar el nombre de usuario que queremos utilizar. El valor por defecto es <i>$usuario</i>.
      *          </li>
      *          <li>
-     *              <b>threads n</b> -> para indicar que se quiere utilizar <b>n</b> transmisiones simultaneas. El valor por defecto es <i>4</i>.
+     *              <b>threads n</b> -> para indicar que se quiere transmitir <b>n</b> archivos simultaneamente. El valor por defecto es <i>4</i>.
      *          </li>
      *          <li>
      *              <b>gui</b> -> para indicar que se quiere iniciar el cliente en modo interfaz grafica. Para ello, se debe
-     *              disponer un entorno java que tenga la libreria {@link java.awt}, en caso de fallo, intente solucionar esto. El valor por defecto es <i>nulo</i>.
+     *              disponer un entorno java que tenga la libreria {@link java.awt}, en caso de fallo, intente solucionar esto. El valor por defecto es <i>nulo</i> (se ejecutara el cliente en modo consola).
      *          </li>
      *      </ul>
      *
@@ -69,7 +71,6 @@ public class RunClient {
      * <p>
      *     Estos parametros se pueden indicar en cualquier orden, siempre reservando un espacio para indicar el valor
      *     del parametro que se quiere indicar.
-     *
      *     Ejemplos:
      *     <ul>
      *         <li> <i>gui folder "/home/usuario/syncappsharefolder"</i> </li>
@@ -78,9 +79,9 @@ public class RunClient {
      * </p>
      *
      *
-     * @param args
-     * @throws NotBoundException Si la direccionIP:puerto indicados no representa un servicio RMI
-     * @throws IOException Si ocurre un fallo durante la ejecucion
+     * @param args array de argumentos separados por espacios.
+     * @throws NotBoundException Si la direccionIP:puerto indicados no representa un servicio RMI.
+     * @throws IOException Si ocurre un fallo durante la ejecucion.
      */
 
 
@@ -102,6 +103,8 @@ public class RunClient {
 
         boolean executeInGUI = false;
 
+
+        // Comprobamos los argumentos introducidos
 
         if(args != null) {
             for (int i = 0; i < args.length; ) {
@@ -136,8 +139,13 @@ public class RunClient {
             }
     
         }
-        
-        if(ip == null || ip.length() <1) {
+
+
+        // Comprobamos los valores introducidos. En caso de que no se introduzca alguno de los parametros, ponemos
+        // el valor por defecto
+
+        if(ip == null || ip.length() <8 || ip.length() >16 ) {
+            System.out.println("direccion ip no indicada, o direccion ip introducida no es valida. Usando localhost como ip");
             ip = "localhost";
         }
 
@@ -168,12 +176,11 @@ public class RunClient {
         String[] newFixedArgs = new String[] {ip, puerto, usuario, carpeta, hilos};
 
         
-        //aqui toca pasar los argumentos al controlador
+        // Comprobamos en que modo se ejecutara el cliente, indicando ademas los argumentos para el cliente.
         if(executeInGUI) {
-            ClienteGUI interfaz = new ClienteGUI(args);
+            ClienteGUI interfaz = new ClienteGUI(newFixedArgs);
         } else {
-            ClienteCLI.main(newFixedArgs); //ESTE SE CAMBIARA CUANDO TENGAMOS LA INTERFAZ
-            //ClienteGUI.main(newFixedArgs); //AQUI SE EJECUTARA EL CLIENTE POR CONSOLA
+            ClienteCLI.main(newFixedArgs);
         }
 
 
