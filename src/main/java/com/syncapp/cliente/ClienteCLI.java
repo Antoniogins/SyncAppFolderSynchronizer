@@ -61,7 +61,7 @@ public class ClienteCLI {
         cliente.calcularOffset(10);
 
         // Nos anunciamos en el servidor
-        cliente.iniciarUsuario();
+        cliente.iniciarSesion();
 
 
 

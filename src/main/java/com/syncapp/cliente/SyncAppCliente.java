@@ -45,6 +45,7 @@ public class SyncAppCliente {
     private long timeError;
     private Path workingPath;
     private int puerto;
+    private int hilos;
 
 
 
@@ -77,7 +78,7 @@ public class SyncAppCliente {
         user = new TokenUsuario(args[ARG_USUARIO]);
         setWorkingPath(args[ARG_CARPETA]);
         exec = Executors.newFixedThreadPool(  Integer.parseInt(args[ARG_HILOS])  );
-
+        hilos = Integer.parseInt(args[ARG_HILOS]);
 
 
     }
@@ -196,10 +197,10 @@ public class SyncAppCliente {
     }
     
 
-    public void iniciarUsuario() throws RemoteException {
+    public void iniciarSesion() throws RemoteException {
         if(user != null) {
             System.out.println("Iniciando sesion como <"+user.name +"> ...");
-            user.session_id = remoteServer.iniciarUsuario(user);
+            user.session_id = remoteServer.iniciarSesion(user);
             System.out.println("Sesion iniciada con exito, sesion_id="+user.session_id);
         }
     }
@@ -244,7 +245,7 @@ public class SyncAppCliente {
     public void cerrar_usuario() {
         System.out.println("Cerrando usuario ...");
         try {
-            remoteServer.cerrarUsuario(user);
+            remoteServer.cerrarSesion(user);
             System.out.println("Sesion cerrada con exito");
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -475,6 +476,8 @@ public class SyncAppCliente {
                 throw new RuntimeException(e);
             }
         }
+
+        exec = Executors.newFixedThreadPool(hilos);
 
     }
 

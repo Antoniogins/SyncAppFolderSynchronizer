@@ -2,9 +2,7 @@ package com.syncapp.utility;
 
 
 /**
- * Esta enumeracion nos permite representar ciertas acciones al establecer el servicio SyncApp
- * 
- * @author Antonio Gines Buendia Lopez
+ * Esta clase describe variables globales al sistema distribuido.
  */
 public class Operaciones {
     public static final int UPLOAD = 1100 ;

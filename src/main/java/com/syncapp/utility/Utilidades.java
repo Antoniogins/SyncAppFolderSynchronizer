@@ -33,7 +33,7 @@ public class Utilidades {
      * del directorio en un arraylist de Path.
      * 
      * 
-     * @param Path 
+     * @param pathToList
      * @return ArrayList<Path> , o null si el directorio no existe
      * @throws IOException
      */
@@ -205,8 +205,27 @@ public class Utilidades {
 
 
     public String hashmd5(byte[] bytes) {
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(bytes);
+            byte[] result = md5.digest();
 
-        return null;
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < result.length; i++) {
+                sb.append(Integer.toString((result[i] & 0xff) + 0x100, 16).substring(1));
+            }
+
+            return  sb.toString();
+
+
+
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
 

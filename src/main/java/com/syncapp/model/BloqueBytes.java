@@ -15,16 +15,11 @@ public class BloqueBytes implements Serializable{
 
     @Override
     public String toString() {
-        float kb = size/1000; //Para saber cuantos kB
-        // float mb = size/1000000; //Para saber cuantos mB
+        float kb = (float) size/1000; //Para saber cuantos kB
+        float mb = kb/1000;
 
-        // DecimalFormat df = new DecimalFormat("0.00");
-        
-        // String sizzze = ( mb < 1.0 )? df.format(kb)+"KB" : df.format(mb)+"MB" ;
-        // return "[ file_id="+", block_id="+id+", pos="+position+", size="+sizzze+"]";
-        return "[file="+id_file+", block_id="+id+", pos="+position+", size="+kb+"KB]";
-    }
-    public void anunciate() {
-        System.out.println(this.toString());
+        String sizeText = (mb<1) ? ( (kb<1) ? (size+"B") : kb+"KB" )  : (mb+"MB")  ;
+
+        return "[file="+id_file+",block="+id+",pos="+position+",size="+sizeText+"]";
     }
 }

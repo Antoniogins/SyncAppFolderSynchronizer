@@ -6,40 +6,15 @@ import java.io.Serializable;
 
 public class TokenUsuario implements Serializable{
     public final String name;
-    public int session_id;
-    private String password; //Password in hash save
-    private String pseudPassword;
+    public String session_id;
+
 
     public TokenUsuario(String name) {
         this.name = new String(name);
     }
-    
-    
-    // public TokenUsuario(String jsonRawFormat) {
-    //     JSONObject jsn = new JSONObject(jsonRawFormat);
-    //     token = jsn.getString("token");
 
-    // }
-
-    public void cambiarPassword(String oldPassword, String newPassword) {
-        //generar hash de oldPasswrod y si coincide con el password antiguo, entonces se genera un hash del nuevo;
+    @Override
+    public String toString() {
+        return "["+name+"#"+session_id+"]";
     }
-
-
-
-    // public TokenUsuario(JSONObject jsn) {
-    //     token = jsn.getString("token");
-    //     password = jsn.getString("psswd");
-    //     pseudPassword = jsn.getString("pspsswd");
-    // }
-
-
-    // public JSONObject toJSON() {
-    //     JSONObject thisis = new JSONObject();
-    //     thisis.put("token", this.token);
-    //     thisis.put("psswd", password);
-    //     thisis.put("pspsswd", pseudPassword);
-    //     return thisis;
-    // }
-
 }

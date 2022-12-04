@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,7 +85,7 @@ import com.syncapp.utility.Utilidades;
  *             Sincronizarse temporalmente con el servidor {@link SyncAppServer#obtenerHora()}.
  *         </li>
  *         <li>
- *             Iniciar sesion, indicando su token de usuario {@link SyncAppServer#iniciarUsuario(TokenUsuario)}.
+ *             Iniciar sesion, indicando su token de usuario {@link SyncAppServer#iniciarSesion(TokenUsuario)}.
  *         </li>
  *         <li>
  *             Ya esta listo para ejecutar alguna de las funciones ofrecidas.
@@ -104,20 +105,15 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
 
     /**
-     * Representa una lista de usuaios activos, que
-     */
-    ArrayList<String> usuariosActivos;
-
-    /**
      * Registro para almacenar las sesiones de usuario activas. <br>
      * Se almacena la pareja {@link Integer identificador unico de sesion}/{@link TokenUsuario usuario que realiza la sesion}
      */
-    HashMap< Integer, TokenUsuario> sesionesUsuarioActivas;
+    HashMap< String, TokenUsuario> sesionesUsuarioActivas;
 
     /**
      * Registro para almacenar los identificadores de sesiones que ya han sido usados (int).
      */
-    ArrayList<Integer> memoriaDeSesiones;
+    ArrayList<String> memoriaDeSesiones;
 
     /**
      * Registro para almacenar que archivos estan siendo leidos/escritos.
@@ -153,7 +149,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * mismo usuario. <br>
      * Se almacena la pareja {@link Integer id_sesion}/{@link ArrayList}<{@link Path}>
      */
-    HashMap< Integer, ArrayList<String> > archivosActivosEnSesion;
+    HashMap< String, ArrayList<String> > archivosActivosEnSesion;
 
     /**
      * Identificador global de archivos, que sirve para poner un id a cada uno de los archivos, de forma ordenada.
@@ -161,7 +157,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     static int globalFileID;
 
     /**
-     * Nos permite almacenar contenido a un log, por ejemplo inicio de sesion, archivos cargados, archivos descargados, etc.
+     * Nos permite almacenar contenido a un log, por ejemplo inicio de sesion, archivos cargados, errores, etc.
      */
     Logger logger;
     
@@ -182,7 +178,6 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         super();
 
         // Inicializamos los registros de usuarios
-        usuariosActivos = new ArrayList<>();
         sesionesUsuarioActivas = new HashMap<>();
         memoriaDeSesiones = new ArrayList<>();
 
@@ -197,6 +192,9 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         lectoresArchivo = new HashMap<>();
         ultimoBloqueEnviado = new HashMap<>();
         posicionByteActual = new HashMap<>();
+
+        // Inicializamos el Logger
+        logger = Logger.getLogger("com.syncapp.server.SyncAppServer");
 
 
     }
@@ -219,36 +217,39 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * Dado que varios usuarios pueden acceder al servicio de forma simultanea, cada usuario tendra un {@link Integer id de sesion},
      * con el que podra acceder al resto de servicios.
      * @param usuario {@link TokenUsuario} que quiere iniciar sesion.
-     * @return id {@link Integer id de sesion} asignado al usuario. Si el usuario ofrecido al metodo es nulo o no contiene nombre, se devuelve -1, indicando
+     * @return id {@link String id de sesion} asignado al usuario. Si el usuario ofrecido al metodo es nulo o no contiene nombre, se devuelve null, indicando
      * asi que hay fallos.
      *
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     @Override
-    public int iniciarUsuario(TokenUsuario usuario) throws RemoteException {
-        if(usuario == null) return -1;
-        if(usuario.name.length() <1) return -1;
+    public String iniciarSesion(TokenUsuario usuario) throws RemoteException {
+        if(usuario == null) return null;
+        if(usuario.name.length() <1) return null;
 
         // Asignamos un identificador unico al usuario
         // Para ello, creamos un numero aleatorio, y reintentamos hasta que el numero obtenido no haya sido
         // anteriormente seleccionado a un usuario (memoriaDeSesiones)
-        int id = 0;
+        String id = "";
         do {
-            id = (int) (Math.random()*Integer.MAX_VALUE);
+            id = ""+( (int) (Math.random()*10000) );
         } while (memoriaDeSesiones.contains(id));
+
+        // Ponemos a usuario su id
+        usuario.session_id = id;
 
         // Añadimos el usuario al registro de sesiones activas, y al registro de identificadores de usuario ya usados
         memoriaDeSesiones.add(id);
         sesionesUsuarioActivas.put(id, usuario);
         archivosActivosEnSesion.put(id, new ArrayList<>() );
 
-
-
-
-        System.out.println("Usuario: "+usuario.name+" ha iniciado sesion");
-
-        //DEPRECATED
-        usuariosActivos.add(usuario.name);
+        // Loggeamos el inicio de sesion
+        try {
+            logger.info("ha iniciado sesion: "+usuario+" desde la direccion "+getClientHost());
+        } catch (ServerNotActiveException e) {
+            logger.severe("error al iniciar sesion el usuario "+usuario);
+            throw new RuntimeException(e);
+        }
 
         return id;
         
@@ -284,7 +285,9 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      */
     @Override
     public int abrirArchivo(TokenUsuario usuario, Archivo archivo, String op_mode) throws RemoteException { // op_mode is read or write
-        if(usuario == null || archivo == null || !(op_mode.equals("r") || op_mode.equals("rw"))){ return -1; }
+        if(usuario == null || archivo == null || !(op_mode.equals("r") || op_mode.equals("rw"))){
+            return -1;
+        }
         if(!sesionesUsuarioActivas.containsKey(usuario.session_id)) { return -1; }
 
 
@@ -307,6 +310,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         try {
             lectoresArchivo.put(file_id, new LectorArchivos(filepath, op_mode, file_id));
         } catch (IOException e1) {
+            logger.severe("error al crear el lector de archivos para el archivo \""+filepath+"\"");
             e1.printStackTrace();
             throw new RemoteException("Error al abrir archivo en servidor");
         }
@@ -314,9 +318,9 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         // Añadimos este archivo a la lista de archivos activos para una sesion
         archivosActivosEnSesion.get(usuario.session_id).add(""+file_id);
 
+        // Loggeamos la apertura del archivo
+        logger.info("abriendo archivo "+archivo+" modo "+op_mode);
 
-
-        System.out.println("abriendo file="+file_id+" ruta="+ archivo.toString()+"  mode="+op_mode);
         return file_id;
     }
 
@@ -341,16 +345,16 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     // Metodos finalizadores
 
     /**
-     * Permite cerrar sesion a un usuario.
+     * Permite cerrar sesion a un usuario. <br>
+     * Se cierra la sesion de usuario asociada al usuario, eliminando todos los registros asociados a este, liberando
+     * asi recursos de memoria.
      * @param usuario {@link TokenUsuario} que quiere cerrar sesion.
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     @Override
-    public void cerrarUsuario(TokenUsuario usuario) throws RemoteException {
+    public void cerrarSesion(TokenUsuario usuario) throws RemoteException {
         if(usuario == null) return;
 
-        // Eliminamos el usuario de la lista de usuarios activos
-        usuariosActivos.remove(usuario.name);
 
         // Eliminamos el usuario de los registros de sesion, y eliminamos su id de sesion para que quede libre para otro usuario
         sesionesUsuarioActivas.remove(usuario.session_id);
@@ -364,7 +368,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
             archivosActivosEnSesion.remove(usuario.session_id);
         }
 
-        System.out.println("Usuario: "+ usuario.name +" ha cerrado sesion");
+        logger.info("usuario "+usuario+" ha cerrado sesion");
     }
 
 
@@ -377,15 +381,20 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     public void cerrarArchivo(int id_file, TokenUsuario usuario) throws RemoteException {
         if(id_file <0 ) return;
 
+
+        // Mostramos informacion
+        logger.info("cerrando archivo "+archivosActivos.get(id_file));
+
+
         // Removemos el archivo de la lista de archivo para la sesion x
         archivosActivosEnSesion.get(usuario.session_id).remove(""+id_file);
-
 
 
         // Removemos el lector de archivos y la entrada del mismo, para el archivo dado
         try {
             lectoresArchivo.get(id_file).cerrarArchivo();
         } catch (IOException e) {
+            logger.severe("error al cerrar el archivo "+id_file);
             throw new RuntimeException(e);
         }
         lectoresArchivo.remove(id_file);
@@ -395,7 +404,6 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
 
 
-        System.out.println("cerrando archivo "+id_file);
     }
 
 
@@ -436,14 +444,23 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      */
     @Override
     public ArrayList<Archivo> listaArchivos(TokenUsuario usuario) throws RemoteException {
+
+        // Comprobamos que el usuario tenga una sesion activa
         if(!sesionesUsuarioActivas.containsKey(usuario.session_id)) return null;
+
+        // Obtenemos la carpeta contenedora del usuario
         Path toWalk = Paths.get(usersContainers.toString() , usuario.name);
 
+        // Si no existe dicha carpeta devolvemos null (primera vez que inicia sesion)
         if(!toWalk.toFile().exists()) return null;
 
+        // Obtenemos la lista de archivos hay en la carpeta contenedora del usuario
         ArrayList<Archivo> listaRet = Utilidades.listFiles( toWalk );
-        System.out.println("listando archivos de <"+ usuario.name +">"+" cantidad de elementos: "+listaRet.size());
-        System.out.println("listando archivos de <"+ usuario.name +">"+" -> "+Paths.get(usersContainers.toString() , usuario.name)+" cantidad de elementos: "+listaRet.size());
+
+        // Mostramos informacion
+        logger.info("listando archivos para "+usuario+" total de elementos="+listaRet.size());
+
+
         return listaRet;
     }
 
@@ -463,8 +480,8 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
             return null;
         }
 
-        System.out.println(Paths.get(usersContainers.toString() , usuario.name));
-        System.out.println("obteniendo parametros de archivos pedidos");
+        logger.info("obteniendo informacion de archivos de "+usuario+" con "+lista.size()+" elementos");
+
         return Utilidades.obtenerParametrosSimultaneos(lista, Paths.get(usersContainers.toString() , usuario.name));
         
     }
@@ -515,14 +532,17 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      */
     @Override
     public BloqueBytes leerBloqueBytes(int id_file, long position) throws RemoteException {
+
+        // Obtenemos el lector de archivos
         LectorArchivos archivoActual = lectoresArchivo.get(id_file);
 
+
         try {
-            System.out.println("leyendo file="+id_file+" pos="+position);
+            logger.info("obteniendo bloque del archivo "+id_file);
             return archivoActual.leerBloqueBytesEnPosicion(position);
 
         } catch (IOException e) {
-            System.out.println("aqui falla?");
+            logger.severe("error al leer el bloque "+" position del archivo "+id_file);
             e.printStackTrace();
             throw new RemoteException("Error al leer un bloque de bytes");
         }
@@ -561,9 +581,10 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
         LectorArchivos actual = lectoresArchivo.get(id_file);
         try {
-            System.out.println("escribiendo "+bloq_bytes.toString());
+            logger.info("escribiendo el bloque "+bloq_bytes);
             actual.escribirBloqueBytesEnPosicion(bloq_bytes, pos);
         } catch(IOException ioe) {
+            logger.severe("error al escribir el bloque "+bloq_bytes);
             ioe.printStackTrace();
             throw new RemoteException("Error al escribir el bloque de bytes en servidor");
         }
@@ -604,9 +625,10 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     public long obtenerHora() throws RemoteException {
         
         // int rand = (int) (Math.random()*100);
-
         // simularRetardo(rand);
+
         long hora = System.currentTimeMillis();
+
         // simularRetardo(rand);
         
         return hora;
@@ -621,17 +643,11 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      */
     @Override
     public void ping() throws RemoteException {
-        
-        // ESTO ES PARA PRUEBAS, simulamos el tiempo que tarda en viajar un byte tanto
-        // tiempo que tarda en llegar a servidor como tiempo que tarda en llegar a
-        // cliente que seria 2*tmin
-
-        // Como al llegar la peticion no se realiza ninguna accion, 2*tmin = RTT
-        
-        // int rand = (int) (Math.random()*10);
-        // simularRetardo(rand);
-        // simularRetardo(rand);
-        return ;
+        try {
+            logger.info("ping de "+getClientHost());
+        } catch (ServerNotActiveException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

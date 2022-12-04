@@ -25,13 +25,19 @@ public class Archivo implements Serializable {
 
         workingFOlder = workingPath.toString();
 
+        timeMilisLastModified = -1;
+
     }
 
 
 
     @Override
     public String toString() {
-        return "[ruta="+ruta+", hash="+hash+", lastModified="+timeMilisLastModified+"]";
+        String toRet = "[\"";
+        toRet = toRet.concat(ruta+",");
+        toRet = toRet.concat(  (hash == null)? "no_hash," : (hash+",") );
+        toRet = toRet.concat(  (timeMilisLastModified < 0)? "no_time" : (""+timeMilisLastModified)  );
+        return toRet+"]";
     }
 
     public Path toPath() {
@@ -41,7 +47,6 @@ public class Archivo implements Serializable {
     public Path toRelativePath() {
         return Paths.get(ruta);
     }
-
 
 
     public File toFile() {

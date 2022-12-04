@@ -59,7 +59,7 @@ import com.syncapp.server.SyncAppServer;
  *             correspondiente hasta que no queden bloques por obtener/escribir. Cuando obtenemos bloques, si no quedan bloques por leer, se devuelve -1.
  *         </li>
  *         <li>
- *             {@link #cerrarArchivo(int) Cerrar} el archivo, liberando recursos, y permitiendo que otros usuarios puedan acceder al arachivo.
+ *             {@link #cerrarArchivo(int, TokenUsuario) Cerrar} el archivo, liberando recursos, y permitiendo que otros usuarios puedan acceder al arachivo.
  *         </li>
  *     </ol>
  * </p>
@@ -74,7 +74,7 @@ import com.syncapp.server.SyncAppServer;
  *             Sincronizarse temporalmente con el servidor {@link SyncAppServer#obtenerHora()}.
  *         </li>
  *         <li>
- *             Iniciar sesion, indicando su token de usuario {@link SyncAppServer#iniciarUsuario(TokenUsuario)}.
+ *             Iniciar sesion, indicando su token de usuario {@link SyncAppServer#iniciarSesion(TokenUsuario)}.
  *         </li>
  *         <li>
  *             Ya esta listo para ejecutar alguna de las funciones ofrecidas.
@@ -97,12 +97,12 @@ public interface SyncApp extends Remote {
      * Dado que varios usuarios pueden acceder al servicio de forma simultanea, cada usuario tendra un {@link Integer id de sesion},
      * con el que podra acceder al resto de servicios.
      * @param usuario {@link TokenUsuario} que quiere iniciar sesion.
-     * @return id {@link Integer id de sesion} asignado al usuario. Si el usuario ofrecido al metodo es nulo o no contiene nombre, se devuelve -1, indicando
+     * @return id {@link String id de sesion} asignado al usuario. Si el usuario ofrecido al metodo es nulo o no contiene nombre, se devuelve null, indicando
      * asi que hay fallos.
      *
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
-    int iniciarUsuario(TokenUsuario usuario) throws RemoteException;
+    String iniciarSesion(TokenUsuario usuario) throws RemoteException;
 
 
 
@@ -164,7 +164,7 @@ public interface SyncApp extends Remote {
      * @param usuario {@link TokenUsuario} que quiere cerrar sesion.
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
-    void cerrarUsuario(TokenUsuario usuario) throws RemoteException;
+    void cerrarSesion(TokenUsuario usuario) throws RemoteException;
 
 
 
