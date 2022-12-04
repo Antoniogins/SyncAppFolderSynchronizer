@@ -34,7 +34,7 @@ public class Upload implements Runnable{
 
 
 
-        this.la = new LectorArchivos(abs, "r");
+        this.la = new LectorArchivos(abs, "r", 0);
         ultimo_enviado = -1; //Todavia no se ha enviado ninguno
     }
 
@@ -115,7 +115,7 @@ public class Upload implements Runnable{
         
 
         try {
-            server.cerrarArchivo(id_file);
+            server.cerrarArchivo(id_file, tu);
         } catch (RemoteException e) {
             e.printStackTrace();
         }

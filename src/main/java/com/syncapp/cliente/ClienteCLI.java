@@ -88,6 +88,14 @@ public class ClienteCLI {
         load(cliente);
 
 
+        // Bloqueamos la aplicacion hasta que se termine de descargar todos los archivos.
+        // Realizamos esta operacion, ya que si hay muchos archivos que transmitir, el
+        // monitor de carpetas detectara como nuevos/modificados los archivos que se descargue
+        // y los volvera a cargar (esto no debe pasar)
+        cliente.esperarHastaTerminarTransmisiones();
+        System.out.println("se acabaron las transmisiones");
+
+
 
         // Una vez se han sincronizado todos los archivos (o por lo menos ya tienen
         // asignada una operacion) esperamos 30 segundos y empezamos a observar los

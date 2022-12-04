@@ -48,7 +48,8 @@ public class RunClient {
      *              el programa fallará.
      *              <br>
      *              Si la ruta indicada no es una ruta absoluta (que no comienza desde el directorio raiz "C:" o "/")
-     *              se supondra que la carpeta indicada es una carpeta dentro del directorio del usuario ( $ruta_usuario/foldPath -> windows:  "C:\Users\ usuario\foldPath" , linux/macos: "/home/usuario/foldPath").
+     *              se supondra que la carpeta indicada es una carpeta dentro del directorio del usuario ( $ruta_usuario/foldPath -> windows:
+     *              {@code "C:\Users\<usuario>\foldPath"}, linux/macos: {@code "/home/<usuario>/foldPath"}).
      *              <br>
      *              El valor por defecto es <i>"$ruta_usuario/syncappshared"</i>.
      *          </li>

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import com.syncapp.interfaces.SyncApp;
 import com.syncapp.model.Archivo;
@@ -59,6 +60,7 @@ public class SyncAppCliente {
     //esto pasara al controlador
     private ExecutorService fixedSubRutines;
     // private InterfazCliente interfaz;
+
 
 
 
@@ -136,8 +138,8 @@ public class SyncAppCliente {
 
 
     public void setUser(TokenUsuario user) {
-        if(user == null || user.token == null || user.token.equals("")) return;
-        this.user = new TokenUsuario(user.token);
+        if(user == null || user.name == null || user.name.equals("")) return;
+        this.user = new TokenUsuario(user.name);
     }
 
 
@@ -196,9 +198,9 @@ public class SyncAppCliente {
 
     public void iniciarUsuario() throws RemoteException {
         if(user != null) {
-            System.out.println("Iniciando sesion como <"+user.token+"> ...");
-            remoteServer.iniciar_usuario(user);
-            System.out.println("Sesion iniciada con exito");
+            System.out.println("Iniciando sesion como <"+user.name +"> ...");
+            user.session_id = remoteServer.iniciarUsuario(user);
+            System.out.println("Sesion iniciada con exito, sesion_id="+user.session_id);
         }
     }
     
@@ -242,7 +244,7 @@ public class SyncAppCliente {
     public void cerrar_usuario() {
         System.out.println("Cerrando usuario ...");
         try {
-            remoteServer.cerrar_usuario(user);
+            remoteServer.cerrarUsuario(user);
             System.out.println("Sesion cerrada con exito");
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -349,7 +351,7 @@ public class SyncAppCliente {
             local.forEach(c-> System.out.println(c.ruta)); //TESTS
         }
 
-        ArrayList<Archivo> remota = remoteServer.lista_archivos(user);
+        ArrayList<Archivo> remota = remoteServer.listaArchivos(user);
         if (remota != null) {
             remota.sort((a, b) -> a.ruta.compareTo(b.ruta));
             System.out.println("\ntamaño lista remota="+remota.size()); //TESTS
@@ -427,7 +429,7 @@ public class SyncAppCliente {
         for (int i = 0; i < 4; i++) {
 
             long t0 = System.currentTimeMillis();
-            remoteServer.calcularTmin((byte) 0); 
+            remoteServer.ping();
             long t1 = System.currentTimeMillis();
 
             long rttActual = t1 - t0;
@@ -462,7 +464,19 @@ public class SyncAppCliente {
 
 
 
+    public void esperarHastaTerminarTransmisiones() {
+        exec.shutdown();
+        boolean transmissionFinished = false;
+        while(!transmissionFinished) {
+            try {
+                transmissionFinished = exec.awaitTermination(300, TimeUnit.SECONDS);
+                //BLOQUEAMOS HASTA QUE TERMINEN TODAS LAS TAREAS DE exec U OCURRA UN TIMOUT DE 300s;
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
+    }
 
 
 

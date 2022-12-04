@@ -33,7 +33,7 @@ public class Download implements Runnable {
         this.abs = wfold.resolve(path);
 
 
-        this.la = new LectorArchivos(abs, "rw");
+        this.la = new LectorArchivos(abs, "rw", 0);
         ultimo_recibido = -1; //Replica de upload
     }
 
@@ -46,6 +46,7 @@ public class Download implements Runnable {
             e1.printStackTrace();
             return;
         }
+        la.id_file = id_file;
         System.out.println("bajando file="+id_file+" ruta="+ruta.toString());
 
 
@@ -112,7 +113,7 @@ public class Download implements Runnable {
         }
 
         try {
-            server.cerrarArchivo(id_file);
+            server.cerrarArchivo(id_file, usuario);
         } catch (RemoteException e) {
             e.printStackTrace();
         }

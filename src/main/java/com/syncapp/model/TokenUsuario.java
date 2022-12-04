@@ -5,12 +5,13 @@ import java.io.Serializable;
 // import org.json.JSONObject;
 
 public class TokenUsuario implements Serializable{
-    public final String token;
+    public final String name;
+    public int session_id;
     private String password; //Password in hash save
     private String pseudPassword;
 
-    public TokenUsuario(String token) {
-        this.token = new String(token);
+    public TokenUsuario(String name) {
+        this.name = new String(name);
     }
     
     

@@ -14,6 +14,8 @@ public class Archivo implements Serializable {
 
 
 
+
+
     public Archivo(Path archivo, Path workingPath) {
         if(  archivo.isAbsolute()  ) {
             ruta = (workingPath.relativize(archivo)).toString();

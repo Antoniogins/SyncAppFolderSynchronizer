@@ -26,8 +26,8 @@ public class LectorArchivos {
      * @throws FileNotFoundException 
      *         
      */
-    public LectorArchivos(Path path, String op_mode) throws IOException { //r:read w:write rw:read and write
-
+    public LectorArchivos(Path path, String op_mode, int id_file) throws IOException { //r:read w:write rw:read and write
+        if(id_file <0 ) return;
 
         //SOLUCION TEMPORAL
         if(op_mode.equals("rw")){
@@ -50,6 +50,8 @@ public class LectorArchivos {
                 // Files.setPosixFilePermissions(path, Util.getPerms());
             }
         }
+
+        this.id_file = id_file;
         
 
 
