@@ -19,7 +19,7 @@ import com.syncapp.model.BloqueBytes;
 import com.syncapp.model.Archivo;
 import com.syncapp.model.TokenUsuario;
 import com.syncapp.utility.LectorArchivos;
-import com.syncapp.utility.Util;
+import com.syncapp.utility.Utilidades;
 
 public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
@@ -40,7 +40,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     static int global_id;
     
 
-    protected SyncAppServer() throws RemoteException {
+    public SyncAppServer() throws RemoteException {
         super();
         usuariosActivos = new ArrayList<>();
         archivosActivos = new HashMap<>();
@@ -161,7 +161,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     public String hash(int file_id) throws RemoteException {
         System.out.println("realizando hash a "+file_id);
         log("realizando hash a "+file_id);
-        return Util.checkSumhash( archivosActivos.get(file_id).toFile() );
+        return Utilidades.checkSumhash( archivosActivos.get(file_id).toFile() );
     }
 
     @Override
@@ -178,7 +178,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
         if(!toWalk.toFile().exists()) return null;
 
-        ArrayList<Archivo> listaRet = Util.listFiles( toWalk );
+        ArrayList<Archivo> listaRet = Utilidades.listFiles( toWalk );
         System.out.println("listando archivos de <"+u.token+">"+" cantidad de elementos: "+listaRet.size());
         log("listando archivos de <"+u.token+">"+" -> "+Paths.get(usersContainers.toString() , u.token )+" cantidad de elementos: "+listaRet.size());
         return listaRet;
@@ -194,7 +194,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
         System.out.println(Paths.get(usersContainers.toString() , tu.token));
         log("obteniendo parametros de archivos pedidos");
-        return Util.obtenerParametrosSimultaneos(lista, Paths.get(usersContainers.toString() , tu.token));
+        return Utilidades.obtenerParametrosSimultaneos(lista, Paths.get(usersContainers.toString() , tu.token));
         
     }
 
@@ -206,7 +206,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
         try {
             log("obteniendo parametros de archivo "+a.ruta);
-            return Util.getParameters(a, Paths.get(usersContainers.toString() , tu.token));
+            return Utilidades.getParameters(a, Paths.get(usersContainers.toString() , tu.token));
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -359,7 +359,6 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         SyncAppServer sap = new SyncAppServer();
         Naming.rebind("rmi://localhost:1099/SyncApp", sap);
         System.out.println("ready to operate");
-        sap.log("ready to operate");
         
     }
 

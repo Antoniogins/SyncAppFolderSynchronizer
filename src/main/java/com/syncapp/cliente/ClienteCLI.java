@@ -11,9 +11,7 @@ import java.util.ArrayList;
 
 import com.syncapp.model.Archivo;
 import com.syncapp.model.TokenUsuario;
-import com.syncapp.utility.Util;
-
-import javax.print.attribute.standard.SheetCollate;
+import com.syncapp.utility.Utilidades;
 
 public class ClienteCLI {
 
@@ -178,12 +176,12 @@ public class ClienteCLI {
                     case "delete" -> {
                     }
                     case "list" -> {
-                        Util.listFiles(cliente.getWorkingPath()).forEach(System.out::println);
+                        Utilidades.listFiles(cliente.getWorkingPath()).forEach(System.out::println);
                         for (String s : sentencia) {
                             if (sentencia[1].charAt(0) == 'l') {
                                 //.listFolders(cliente.getWorkingPath());
                             } else if (sentencia[1].charAt((0)) == 'r') {
-                                Util.listFolders(cliente.getWorkingPath());
+                                Utilidades.listFolders(cliente.getWorkingPath());
                             } else if (sentencia[1].charAt((0)) == 'i') {
                                 //
                             }

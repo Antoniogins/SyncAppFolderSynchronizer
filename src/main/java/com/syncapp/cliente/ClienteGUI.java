@@ -118,8 +118,7 @@ public class ClienteGUI extends JFrame implements ActionListener {
 			int result = JOptionPane.showConfirmDialog(null, inputPanel,
 					"introduce direccion ip y puerto", JOptionPane.OK_CANCEL_OPTION);
 			if (result == JOptionPane.OK_OPTION) {
-				System.out.println("x value: " + direccionIP.getText());
-				System.out.println("y value: " + puerto.getText());
+				System.out.println("direccion ip: " + direccionIP.getText() + " puerto: "+puerto.getText());
 			}
 
 			// bservidor.add(pop_servidor);

@@ -5,8 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="50e8eb93-129d-4855-bc1d-8f11155dc7ff" name="Changes" comment="simple test commit">
+      <change afterPath="$PROJECT_DIR$/.idea/syncapp_client.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/RunClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/RunClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/RunServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/RunServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteCLI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteCLI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteGUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteGUI.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Download.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Download.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ServicioMonitorizacion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ServicioMonitorizacion.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/SyncAppCliente.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/SyncAppCliente.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Upload.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Upload.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/server/SyncAppServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/server/SyncAppServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/tests/TestComparator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/tests/TestComparator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/LectorArchivos.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/LectorArchivos.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Ops.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Operaciones.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Util.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Utilidades.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,17 +70,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/antonio/.ssh/linuxDesktop.pub&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "last_opened_file_path": "/run/media/antonio/pendriveMode/UPCT/SySD/ProyectoFinal/github/syncapp_client",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration default="true" type="JetRunConfigurationType">
       <module name="syncapp_client" />

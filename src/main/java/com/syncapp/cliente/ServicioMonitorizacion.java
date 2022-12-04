@@ -3,7 +3,6 @@ package com.syncapp.cliente;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -12,8 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.syncapp.model.Archivo;
-import com.syncapp.utility.Ops;
-import com.syncapp.utility.Util;
+import com.syncapp.utility.Operaciones;
+import com.syncapp.utility.Utilidades;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 
@@ -47,7 +46,7 @@ public class ServicioMonitorizacion implements Runnable {
     public void actualizarCarpetasRegistradas() throws IOException {
 
         System.out.println("working path="+sac.getWorkingPath().toString()); //TESTS
-        ArrayList<Path> listaCarpetas = Util.listFolders(sac.getWorkingPath());
+        ArrayList<Path> listaCarpetas = Utilidades.listFolders(sac.getWorkingPath());
         listaCarpetas.forEach(c -> {
 
             Path pathAbsoluto = sac.getWorkingPath().resolve(c);
@@ -216,7 +215,7 @@ public class ServicioMonitorizacion implements Runnable {
                 try {
 //                    Path relativo = sac.getWorkingPath().relativize(a);
                     System.out.println("enviando archivo="+a);
-                    sac.ejecutarOperacion(new Archivo(a , sac.getWorkingPath()) , Ops.UPLOAD);
+                    sac.ejecutarOperacion(new Archivo(a , sac.getWorkingPath()) , Operaciones.UPLOAD);
                     listaDeRelojesABorrarSincronamente.add(a);
 
                 } catch (IOException e) {

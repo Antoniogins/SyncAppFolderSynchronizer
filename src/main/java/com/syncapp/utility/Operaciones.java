@@ -6,7 +6,7 @@ package com.syncapp.utility;
  * 
  * @author Antonio Gines Buendia Lopez
  */
-public class Ops {
+public class Operaciones {
     public static final int UPLOAD = 1100 ;
     public static final int DOWNLOAD = 2200 ;
     public static final int FAIL = 001100 ;

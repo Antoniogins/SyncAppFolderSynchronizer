@@ -10,7 +10,7 @@ import com.syncapp.model.BloqueBytes;
 import com.syncapp.model.Archivo;
 import com.syncapp.model.TokenUsuario;
 import com.syncapp.utility.LectorArchivos;
-import com.syncapp.utility.Util;
+import com.syncapp.utility.Utilidades;
 
 
 public class Download implements Runnable {
@@ -61,7 +61,7 @@ public class Download implements Runnable {
                     if (reintentarRemoto) {
 
                         // Analgo a Upload (se nota cual hicimos primero????)
-                        bb = server.leerBloqueBytes(id_file, (ultimo_recibido + 1)*Util.MAX_BYTES_IN_BLOCK );
+                        bb = server.leerBloqueBytes(id_file, (ultimo_recibido + 1)* Utilidades.MAX_BYTES_IN_BLOCK );
                         reintentarRemoto = false;
 
                     } else {

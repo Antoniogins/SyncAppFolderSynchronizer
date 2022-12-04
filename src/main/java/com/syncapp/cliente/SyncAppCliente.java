@@ -2,7 +2,6 @@ package com.syncapp.cliente;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.Naming;
@@ -16,8 +15,8 @@ import java.util.concurrent.Executors;
 import com.syncapp.interfaces.SyncApp;
 import com.syncapp.model.Archivo;
 import com.syncapp.model.TokenUsuario;
-import com.syncapp.utility.Util;
-import com.syncapp.utility.Ops;
+import com.syncapp.utility.Utilidades;
+import com.syncapp.utility.Operaciones;
 
 public class SyncAppCliente {
 
@@ -314,17 +313,17 @@ public class SyncAppCliente {
     //devuelve >0 si la operacion ya se ha ejecutado y <0 si el archivo necesita mas informacion para decidir que ejecutar
     public int ejecutarOperacion(Archivo a, int operacion) throws IOException {
         int returner = 1;
-        System.out.println(Ops.toString(operacion)+": "+a.ruta);
+        System.out.println(Operaciones.toString(operacion)+": "+a.ruta);
         switch(operacion){
-            case Ops.UPLOAD : {
+            case Operaciones.UPLOAD : {
                 exec.execute(new Upload(remoteServer, a, workingPath.toString() , user)); 
                 break;
             }
-            case Ops.DOWNLOAD : {
+            case Operaciones.DOWNLOAD : {
                 exec.execute(new Download(remoteServer, a, workingPath.toString() , user));
                 break;
             }
-            case Ops.MORE_INFO : {
+            case Operaciones.MORE_INFO : {
                 returner = -1;
                 break;
             }
@@ -343,7 +342,7 @@ public class SyncAppCliente {
     public ArrayList<Archivo> primeraIteracion() throws RemoteException {
 
         //Obtenemos listas iniciales, sin parametros
-        ArrayList<Archivo> local = Util.listFiles(workingPath);
+        ArrayList<Archivo> local = Utilidades.listFiles(workingPath);
         if (local != null) {
             local.sort((a, b) -> a.ruta.compareTo(b.ruta));
             System.out.println("tamaño lista local="+local.size()); //TESTS
@@ -362,7 +361,7 @@ public class SyncAppCliente {
         
         
 
-        HashMap<Archivo , Integer> pendientes = Util.operacionesIniciales(local, remota, workingPath);
+        HashMap<Archivo , Integer> pendientes = Utilidades.operacionesIniciales(local, remota, workingPath);
 
         return ejectuarOperaciones(pendientes);
     }
@@ -372,7 +371,7 @@ public class SyncAppCliente {
         //Seguda parte, intercambiar archivos ya existentes
         if(pendientes == null || pendientes.size() < 1) return null;
 
-        ArrayList<Archivo> local = Util.obtenerParametrosSimultaneos(pendientes, workingPath);
+        ArrayList<Archivo> local = Utilidades.obtenerParametrosSimultaneos(pendientes, workingPath);
 
         System.out.println("info local");
         local.forEach(System.out::println);
@@ -381,7 +380,7 @@ public class SyncAppCliente {
 
         System.out.println("info remota");
         remota.forEach(System.out::println);
-        HashMap< Archivo, Integer> operaciones = Util.compararParametrosSimultaneos(local, remota, timeOffset, workingPath);
+        HashMap< Archivo, Integer> operaciones = Utilidades.compararParametrosSimultaneos(local, remota, timeOffset, workingPath);
         
         if(operaciones == null || operaciones.size() == 0) return null;
 

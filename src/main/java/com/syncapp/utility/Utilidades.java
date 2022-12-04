@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
-import java.rmi.RemoteException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -17,13 +16,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.syncapp.interfaces.SyncApp;
 import com.syncapp.model.LocalRemote;
 import com.syncapp.model.Archivo;
 
 
 
-public class Util {
+public class Utilidades {
 
     public static final int MAX_BLOCKS = 16;
     public static final int MAX_BYTES_IN_BLOCK = 8000000; //Por defecto 80KB = 80 000
@@ -223,7 +221,7 @@ public class Util {
         //si no hay archivos remotos, pero si locales, cargamos todos los que hay en local
         if(   (remoto == null || remoto.size() < 1 )    && local.size() >= 1) {
             for(Archivo r : local) {
-                operaciones.put(r, Ops.UPLOAD);
+                operaciones.put(r, Operaciones.UPLOAD);
             }
             return operaciones;
         } 
@@ -232,7 +230,7 @@ public class Util {
         //si no hay archivos locals, pero si remotos, descargamos todos los que hay en remoto
         if(   (local == null || local.size() < 1 )    && remoto.size() >= 1){
             for(Archivo r : remoto) {
-                operaciones.put(r, Ops.DOWNLOAD);
+                operaciones.put(r, Operaciones.DOWNLOAD);
             }
             return operaciones;
         }
@@ -263,13 +261,13 @@ public class Util {
 
             //Primero comparamos si un archivo esta presente unicamente en local o en remoto
             if(b.presentInLocal && !b.presentInRemote) {
-                operacionesMixtas.put(new Archivo( Paths.get(a) , workginPath), Ops.UPLOAD); //Presente en local y no presente en remoto -> subir archivo
+                operacionesMixtas.put(new Archivo( Paths.get(a) , workginPath), Operaciones.UPLOAD); //Presente en local y no presente en remoto -> subir archivo
 
             } else if(!b.presentInLocal && b.presentInRemote) {
-                operacionesMixtas.put(new Archivo( Paths.get(a) , workginPath), Ops.DOWNLOAD); //Presente en remoto y no presente en local -> descargar archivo
+                operacionesMixtas.put(new Archivo( Paths.get(a) , workginPath), Operaciones.DOWNLOAD); //Presente en remoto y no presente en local -> descargar archivo
 
             } else if(b.presentInLocal && b.presentInRemote) {
-                operacionesMixtas.put(new Archivo( Paths.get(a) , workginPath), Ops.MORE_INFO);
+                operacionesMixtas.put(new Archivo( Paths.get(a) , workginPath), Operaciones.MORE_INFO);
 
             }
         });
@@ -283,7 +281,7 @@ public class Util {
 
         if(remoto == null || remoto.size() == 0) {
             for(Archivo r : local) {
-                operaciones.put(r, Ops.UPLOAD);
+                operaciones.put(r, Operaciones.UPLOAD);
             }
             return operaciones;
         } 
@@ -319,9 +317,9 @@ public class Util {
 
             if(!b.hashLocal.equals(b.hashRemoto)) {
                 if(b.timeMilisLocal < b.timeMilisRemote) {
-                    operaciones.put(new Archivo( Paths.get(a) , workingPath), Ops.DOWNLOAD);
+                    operaciones.put(new Archivo( Paths.get(a) , workingPath), Operaciones.DOWNLOAD);
                 } else {
-                    operaciones.put(new Archivo( Paths.get(a) , workingPath), Ops.UPLOAD);
+                    operaciones.put(new Archivo( Paths.get(a) , workingPath), Operaciones.UPLOAD);
                 }
             }
 

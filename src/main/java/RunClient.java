@@ -6,8 +6,84 @@ import java.rmi.NotBoundException;
 import com.syncapp.cliente.ClienteCLI;
 import com.syncapp.cliente.ClienteGUI;
 
+
+/**
+ * Cliente para acceder al servicio de cloud SyncApp
+ */
 public class RunClient {
-    
+
+
+    /**
+     * <p>
+     *   Este metodo estatico nos permite iniciar el cliente de SyncApp. Existen dos modos para ejecutar la aplicacion:
+     *
+     *   <ul>
+     *       <li>
+     *           mediante linea de comandos: usando el cliente {@link ClienteCLI} (por defecto).
+     *       </li>
+     *       <li>
+     *           mediante interfaz grafica: usando el cliente {@link ClienteGUI} (indicando "gui" en argumentos).
+     *       </li>
+     *   </ul>
+     * </p>
+     *
+     * <br>
+     *
+     * <p>
+     *     Se pueden indicar los siguientes argumentos:
+     *
+     *     <ul>
+     *          <li>
+     *              <b>ip a.b.c.d</b> -> para indicar que se quiere conectar al servidor con direccion ip <b>a.b.c.d</b>. El valor por defecto es <i>localhost</i>.
+     *          </li>
+     *          <li>
+     *              <b>port portValue</b> -> para indicar el puerto del servidor al que queremos conectar. El valor por defecto es <i>1099</i>.
+     *          </li>
+     *          <li>
+     *              <b>folder foldPath</b> -> para indicar que se quiere sincronizar la carpeta <b>foldPath</b>.
+     *              Hay que tener especial cuidado con la carpeta que se introduce. Si contiene espacios en algun nombre
+     *              de carpeta, esta hay que indicarla entre comillas ("foldPath"); y si no se tiene permisos de lectura/escritura
+     *              el programa fallará.
+     *              <br>
+     *              Si la ruta indicada no es una ruta absoluta (que no comienza desde el directorio raiz "C:" o "/")
+     *              se supondra que la carpeta indicada es una carpeta dentro del directorio del usuario ("C:\Users\usuario\foldPath" o "/home/usuario/foldPath").
+     *              <br>
+     *              El valor por defecto es <i>"$ruta_usuario/syncappshared"</i>.
+     *          </li>
+     *          <li>
+     *              <b>user username</b> -> para indicar el nombre de usuario que queremos utilizar. El valor por defecto es <i>$usuario</i>.
+     *          </li>
+     *          <li>
+     *              <b>threads n</b> -> para indicar que se quiere utilizar <b>n</b> transmisiones simultaneas. El valor por defecto es <i>4</i>.
+     *          </li>
+     *          <li>
+     *              <b>gui</b> -> para indicar que se quiere iniciar el cliente en modo interfaz grafica. Para ello, se debe
+     *              disponer un entorno java que tenga la libreria {@link java.awt}, en caso de fallo, intente solucionar esto. El valor por defecto es <i>nulo</i>.
+     *          </li>
+     *      </ul>
+     *
+     * </p>
+     *
+     * <br>
+     *
+     * <p>
+     *     Estos parametros se pueden indicar en cualquier orden, siempre reservando un espacio para indicar el valor
+     *     del parametro que se quiere indicar.
+     *
+     *     Ejemplos:
+     *     <ul>
+     *         <li> <i>gui folder "/home/usuario/syncappsharefolder"</i> </li>
+     *         <li> <i>user usuario ip localhost port 1099</i> </li>
+     *     </ul>
+     * </p>
+     *
+     *
+     * @param args
+     * @throws NotBoundException Si la direccionIP:puerto indicados no representa un servicio RMI
+     * @throws IOException Si ocurre un fallo durante la ejecucion
+     */
+
+
     public static void main(String[] args) throws NotBoundException, IOException {
 
         System.out.println("llego hasta linea 10");
