@@ -15,7 +15,7 @@ public class TestComparator {
         System.out.println("Lista de archivos:");
         listaArchivos.forEach(System.out::println);
 
-        ArrayList<Archivo> archivosConInformacion = Utilidades.obtenerParametrosSimultaneos(listaArchivos, folder);
+        ArrayList<Archivo> archivosConInformacion = Utilidades.obtenerMultiplesMetadatos(listaArchivos, folder);
         System.out.println("\nLista de archivos");
         archivosConInformacion.forEach(System.out::println);
     }

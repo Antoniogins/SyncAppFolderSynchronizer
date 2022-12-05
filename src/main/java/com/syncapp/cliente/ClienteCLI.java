@@ -26,15 +26,6 @@ public class ClienteCLI {
     static String[] lastParams;
 
 
-    static void load(SyncAppCliente cliente) throws RemoteException {
-
-        ArrayList<Archivo> pendientes = cliente.primeraIteracion();
-        while(pendientes != null) {
-            pendientes = cliente.siguienteIteracion(pendientes);
-        }
-
-    }
-
 
     public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {
         System.out.println("Args iniciales:");
@@ -85,7 +76,7 @@ public class ClienteCLI {
         // ejecuta la funcion "ejecutarOperaciones", que vera que operacion se ha
         // determinado para cada uno de los archivos, y ejecuta la operacion necesaria
 
-        load(cliente);
+        cliente.sincronizarConServidor();
 
 
         // Bloqueamos la aplicacion hasta que se termine de descargar todos los archivos.
@@ -179,7 +170,7 @@ public class ClienteCLI {
                         lastParams[SyncAppCliente.ARG_CARPETA] = sentencia[1];
                     }
                     case "sincronizar" -> {
-                        load(cliente);
+                        cliente.sincronizarConServidor();
                     }
                     case "delete" -> {
                     }

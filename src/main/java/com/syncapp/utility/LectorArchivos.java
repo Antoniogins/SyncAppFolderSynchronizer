@@ -7,6 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import com.syncapp.model.BloqueBytes;
 
+
+/**
+ * Clase que permite leer y escribir archivos mediante bloques de bytes.
+ */
 public class LectorArchivos {
     Path path;
     RandomAccessFile raf;
@@ -25,7 +29,7 @@ public class LectorArchivos {
      * @throws FileNotFoundException 
      *         
      */
-    public LectorArchivos(Path path, String op_mode, int id_file) throws IOException { //r:read w:write rw:read and write
+    public LectorArchivos(Path path, String op_mode, int id_file) throws IOException { //r:read rw:read and write
         if(id_file <0 ) return;
 
         //SOLUCION TEMPORAL
@@ -120,8 +124,8 @@ public class LectorArchivos {
         chunk.data = realinfo;
         chunk.position = posittion;
         chunk.size = realinfo.length; 
-        chunk.id = ++ultimoEnviado;
-        chunk.id_file = id_file;
+        chunk.blockID = ++ultimoEnviado;
+        chunk.fileID = id_file;
 
         System.out.println(chunk.toString()); //TESTS
         // System.out.println("position in lector="+posittion); //TESTS

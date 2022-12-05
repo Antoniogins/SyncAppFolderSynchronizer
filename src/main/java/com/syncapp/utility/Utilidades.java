@@ -9,13 +9,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import com.syncapp.model.LocalRemote;
 import com.syncapp.model.Archivo;
@@ -169,14 +166,14 @@ public class Utilidades {
      * @param containerFolder
      * @return
      */
-    public static ArrayList<Archivo> obtenerParametrosSimultaneos(ArrayList<Archivo> lista, Path containerFolder) {
+    public static ArrayList<Archivo> obtenerMultiplesMetadatos(ArrayList<Archivo> lista, Path containerFolder) {
         if(lista == null || lista.size() == 0) {
             return null;
         }
         ArrayList<Archivo> listaFinal = new ArrayList<>();
         lista.forEach(c -> {
             try {
-                listaFinal.add( getParameters( c, containerFolder) );
+                listaFinal.add( obtenerMetadatos( c, containerFolder) );
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -215,7 +212,7 @@ public class Utilidades {
      * @return
      * @throws IOException
      */
-    public static Archivo getParameters(Archivo a, Path workingFolder) throws IOException {
+    public static Archivo obtenerMetadatos(Archivo a, Path workingFolder) throws IOException {
 
         Archivo deVuelta = new Archivo(  a.toRelativePath(), workingFolder);
 
@@ -378,38 +375,26 @@ public class Utilidades {
 
 
 
-    // Metodos para comparar listas de archivos cambiar a Cliente
+    // Metodos para comparar listas de archivos
 
-    //ESTA SOLO COMPARA PRESENCIA LOCAL O REMOTA, TA BIEN PARA OPTIMIZAR
-
-    /**
-     *
-     * @param local
-     * @param remoto
-     * @param workginPath
-     * @return
-     */
-    public static HashMap<Archivo , Integer> operacionesIniciales(ArrayList<Archivo> local, ArrayList<Archivo> remoto, Path workginPath) {
-
-        // Poner un boolean para indicar si comparar metadatos
-
-
-        if(   (local == null || local.size() < 1) && (remoto == null || remoto.size() < 1)  ) return null;
-
-
+    public static HashMap< Archivo, Integer> compararListas(ArrayList<Archivo> local, ArrayList<Archivo> remoto, long offset, boolean comprobarMetadatos) {
         HashMap<Archivo , Integer> operaciones = new HashMap<>();
 
+
+        boolean directUpload = (remoto == null || remoto.size() < 1 )    &&   local.size() >= 1;
         //si no hay archivos remotos, pero si locales, cargamos todos los que hay en local
-        if(   (remoto == null || remoto.size() < 1 )    && local.size() >= 1) {
+        if(directUpload) {
             for(Archivo r : local) {
                 operaciones.put(r, VariablesGlobales.UPLOAD);
             }
             return operaciones;
-        } 
+        }
 
-        
-        //si no hay archivos locals, pero si remotos, descargamos todos los que hay en remoto
-        if(   (local == null || local.size() < 1 )    && remoto.size() >= 1){
+
+
+        boolean directDownload = (local == null || local.size() < 1 )    && remoto.size() >= 1;
+        //si no hay archivos locales, pero si remotos, descargamos todos los que hay en remoto
+        if(directDownload){
             for(Archivo r : remoto) {
                 operaciones.put(r, VariablesGlobales.DOWNLOAD);
             }
@@ -417,96 +402,102 @@ public class Utilidades {
         }
 
 
-
-
+        // Usamos un mapa para almacenar la ruta de un archivo y sus metadatos
+        // Es inviable comparar cada elemento de una lista con el resto de elementos de la otra lista para saber
+        // si tiene presencia en la otra lista. Usamos este mapa, que para una ruta (que viene identificada unica
+        // e inequivocamente por un string) tendra un unico valor asociado en el mapa. Este valor asociado es un
+        // objeto LocalRemote, que permite almacenar temporalmente si una ruta tiene presencia local, presencia remota,
+        // y los metadatos remotos y locales
         HashMap<String , LocalRemote> listaIndices = new HashMap<>();
 
+
+
         local.forEach(c -> {
+
+            // Dado que iteramos sobre la lista local, sabemos que tiene presencia local, e indicamos sus metadatos locales
             LocalRemote lr = new LocalRemote();
             lr.presentInLocal = true;
-            listaIndices.put(c.ruta, lr);
-        });
-        
-        remoto.forEach(c->{
-            if(listaIndices.containsKey(c.ruta)){
-                listaIndices.get(c.ruta).presentInRemote = true;
-            } else {
-                LocalRemote lr = new LocalRemote();
-                lr.presentInRemote = true;
-                listaIndices.put(c.ruta, lr);
-            }
-        });
-
-
-
-        HashMap<Archivo , Integer> operacionesMixtas = new HashMap<>();
-        
-        listaIndices.forEach((a,b)->{
-
-            // Creamos el archivo a operar
-            Archivo operated = new Archivo( Paths.get(a) , workginPath );
-
-            //Primero comparamos si un archivo esta presente unicamente en local o en remoto
-            if(b.presentInLocal && !b.presentInRemote) {
-                operacionesMixtas.put(operated, VariablesGlobales.UPLOAD); //Presente en local y no presente en remoto -> subir archivo
-
-            } else if(!b.presentInLocal && b.presentInRemote) {
-                operacionesMixtas.put(operated, VariablesGlobales.DOWNLOAD); //Presente en remoto y no presente en local -> descargar archivo
-
-            } else {
-                operacionesMixtas.put(operated, VariablesGlobales.MORE_INFO);
-
-            }
-        });
-
-        return operacionesMixtas;
-    }
-
-
-    public static HashMap< Archivo, Integer> compararParametrosSimultaneos(ArrayList<Archivo> local, ArrayList<Archivo> remoto, long offset, Path workingPath) {
-        HashMap<Archivo , Integer> operaciones = new HashMap<>();
-
-        if(remoto == null || remoto.size() == 0) {
-            for(Archivo r : local) {
-                operaciones.put(r, VariablesGlobales.UPLOAD);
-            }
-            return operaciones;
-        } 
-
-
-
-
-        HashMap<String , LocalRemote> listaIndices = new HashMap<>();
-
-        local.forEach(c -> {
-
-            LocalRemote lr = new LocalRemote();
             lr.hashLocal = c.hash;
             lr.timeMilisLocal = c.timeMilisLastModified + offset;
+
+            // Para esta ruta, introducimos en el mapa su objeto LocalRemote, asi podremos compararlo posteriormente
             listaIndices.put(c.ruta, lr);
             
         });
-        
-        remoto.forEach(c->{
-            if(listaIndices.containsKey(c.ruta)){
-                listaIndices.get(c.ruta).hashRemoto = c.hash;
-                listaIndices.get(c.ruta).timeMilisRemote = c.timeMilisLastModified;
-            } else {
-                LocalRemote lr = new LocalRemote();
-                lr.hashRemoto = c.hash;
-                lr.timeMilisRemote = c.timeMilisLastModified;
-                listaIndices.put(c.ruta, lr);
-            }
+
+        remoto.forEach(c -> {
+
+            // En este caso, sabemos que estamos iterando la lista remota, por tanto sabemos que cada ruta que iteremos
+            // tendra presencia remota
+
+            // Dado a que ya hemos introducido valores a listaIndices, para esta ruta concreta puede que ya exista
+            // un LocalRemote asociado (debido a que tuviera presencia local), asi que el LocalRemote sobre el que
+            // tenemos que trabajar es con ese que habiamos creado previamente, pues contiene los metadatos locales
+            // del archivo, y son necesarios para poder comparar local con remota posteriormente
+            LocalRemote lr = (listaIndices.containsKey(c.ruta)) ? listaIndices.get(c.ruta) : new LocalRemote();
+
+            // Indicamos a localRemote que tenemos presencia remota, e indicamos los metadatos remotos
+            lr.presentInRemote = true;
+            lr.hashRemoto = c.hash;
+            lr.timeMilisRemote = c.timeMilisLastModified;
+
+            // Añadimos el LocalRemote a la lista, por si no lo contuviera
+            listaIndices.put(c.ruta, lr);
+
         });
 
+        // Hay que tener en cuenta, que si estamos realizando la primera comprobacion, no se indican los metadatos
+        // de los archivos
 
+
+
+
+
+        // Iteramos la lista para saber que archivos hay que cargar/descargar/mas operaciones
         listaIndices.forEach( (a,b) -> {  // a=archivo (en String)  b=localRemote
+
+            // Si el archivo tiene presencia remota, pero no local, no necesitamos comparar mas metadatos, ya que sabemos
+            // que se tienen que descargar
+            if(b.presentInRemote && !b.presentInLocal) {
+                operaciones.put(new Archivo(a) , VariablesGlobales.DOWNLOAD);
+
+                // Con return saltamos a la siguiente iteracion de foreach
+                return;
+            }
+
+            // Analogamente al caso anterior, si el archivo tiene presencia local pero no remota, directamente lo cargamos
+            if(b.presentInLocal && !b.presentInRemote) {
+                operaciones.put(new Archivo(a) , VariablesGlobales.UPLOAD);
+
+                // Con return saltamos a la siguiente iteracion de foreach
+                return;
+            }
+
+            // A este punto llegamos si el archivo en cuestion tiene tanto presencia local como remota
+            // Existen dos situaciones
+            //     1- estamos realizando la primera iteracion de comparar listas, que no tienen metadatos. En este
+            //        caso no tenemos metadatos que comparar, asi que al archivo le asignamos la operacion obtener
+            //        mas informacion.
+            //
+            //     2- estamos realizando la segunda iteracion de comparar listas, que ya contienen metadatos. En este
+            //        caso ya se pueden comparar los metadatos de los archivos, y determinar si se tienen que
+            //        cargar/descargar/no hacer nada
+            if(!comprobarMetadatos) {
+                // Este bloque se ejecutara cuando el archivo indicado tenga presencia local y remota, y ademas
+                // no se quiera comparar los metadatos del archivo
+                operaciones.put(new Archivo(a) , VariablesGlobales.MORE_INFO);
+
+                // Con return saltamos a la siguiente iteracion de foreach
+                return;
+            }
+
+
 
             if(!b.hashLocal.equals(b.hashRemoto)) {
                 if(b.timeMilisLocal < b.timeMilisRemote) {
-                    operaciones.put(new Archivo( Paths.get(a) , workingPath), VariablesGlobales.DOWNLOAD);
+                    operaciones.put(new Archivo(a), VariablesGlobales.DOWNLOAD);
                 } else {
-                    operaciones.put(new Archivo( Paths.get(a) , workingPath), VariablesGlobales.UPLOAD);
+                    operaciones.put(new Archivo(a), VariablesGlobales.UPLOAD);
                 }
             }
 

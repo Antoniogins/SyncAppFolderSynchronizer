@@ -5,15 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="50e8eb93-129d-4855-bc1d-8f11155dc7ff" name="Changes" comment="simple test commit">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/package-info.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/run/package-info.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Download.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Download.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ServicioMonitorizacion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ServicioMonitorizacion.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteCLI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ClienteCLI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/SyncAppCliente.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/SyncAppCliente.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Upload.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Upload.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/interfaces/SyncApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/interfaces/SyncApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/model/Archivo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/model/Archivo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/model/BloqueBytes.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/model/BloqueBytes.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/server/SyncAppServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/server/SyncAppServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/tests/TestComparator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/tests/TestComparator.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/LectorArchivos.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/LectorArchivos.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Operaciones.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/VariablesGlobales.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Utilidades.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Utilidades.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

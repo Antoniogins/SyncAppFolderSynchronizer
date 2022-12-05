@@ -45,10 +45,10 @@ import com.syncapp.utility.Utilidades;
  *             con aquellos archivos que necesitan mas informacion ({@link String hash}, {@link Long ultima hora modificacion}) para determinar si cargalos o descargarlos.
  *         </li>
  *         <li>
- *             {@link SyncAppCliente#primeraIteracion() Cargar} aquellos archivos que seguro sabemos que necesitan cargarse/descargarse.
+ *             {@link SyncAppCliente#sincronizarConServidor() Cargar} aquellos archivos que seguro sabemos que necesitan cargarse/descargarse.
  *         </li>
  *         <li>
- *             Para aquellos archivos que necesitan mas informacion, {@link #obtenerParametrosSimultaneos(TokenUsuario, ArrayList) obtenerla}.
+ *             Para aquellos archivos que necesitan mas informacion, {@link #obtenerMetadatos(TokenUsuario, ArrayList) obtenerla}.
  *         </li>
  *         <li>
  *             Cargar/descargar aquellos archivos que se consideren necesarios.
@@ -436,7 +436,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * contiene en su carpeta contenedora dentro del servidor.
      * <br>
      * Esta lista de archivos no contiene metadatos sobre los archivos (hash, hora ultima modificacion), para ello se debe
-     * ejecutar {@link #obtenerParametrosSimultaneos(TokenUsuario, ArrayList)}.
+     * ejecutar {@link #obtenerMetadatos(TokenUsuario, ArrayList)}.
      *
      * @param usuario {@link TokenUsuario Usuario} cuya lista se quiere obtener. Previamente debe haber iniciado sesion.
      * @return {@link ArrayList} de {@link Archivo} sin metadatos.
@@ -473,7 +473,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     @Override
-    public ArrayList<Archivo> obtenerParametrosSimultaneos(TokenUsuario usuario, ArrayList<Archivo> lista)
+    public ArrayList<Archivo> obtenerMetadatos(TokenUsuario usuario, ArrayList<Archivo> lista)
             throws RemoteException {
 
         if(!sesionesUsuarioActivas.containsKey(usuario.session_id) || lista == null || lista.size() == 0){
@@ -482,7 +482,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
         logger.info("obteniendo informacion de archivos de "+usuario+" con "+lista.size()+" elementos");
 
-        return Utilidades.obtenerParametrosSimultaneos(lista, Paths.get(usersContainers.toString() , usuario.name));
+        return Utilidades.obtenerMultiplesMetadatos(lista, Paths.get(usersContainers.toString() , usuario.name));
         
     }
 

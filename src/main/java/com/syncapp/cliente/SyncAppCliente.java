@@ -317,20 +317,17 @@ public class SyncAppCliente {
     public int ejecutarOperacion(Archivo a, int operacion) throws IOException {
         int returner = 1;
         System.out.println(VariablesGlobales.toString(operacion)+": "+a.ruta);
-        switch(operacion){
-            case VariablesGlobales.UPLOAD : {
-                exec.execute(new Upload(remoteServer, a, workingPath.toString() , user)); 
-                break;
+        switch (operacion) {
+            case VariablesGlobales.UPLOAD -> {
+                exec.execute(new Upload(remoteServer, a, workingPath.toString(), user));
             }
-            case VariablesGlobales.DOWNLOAD : {
-                exec.execute(new Download(remoteServer, a, workingPath.toString() , user));
-                break;
+            case VariablesGlobales.DOWNLOAD -> {
+                exec.execute(new Download(remoteServer, a, workingPath.toString(), user));
             }
-            case VariablesGlobales.MORE_INFO : {
+            case VariablesGlobales.MORE_INFO -> {
                 returner = -1;
-                break;
             }
-            default : {
+            default -> {
                 System.out.println("operacion desconocida");
             }
         }
@@ -342,53 +339,86 @@ public class SyncAppCliente {
 
 
 
-    public ArrayList<Archivo> primeraIteracion() throws RemoteException {
+    public void sincronizarConServidor() throws RemoteException {
 
         //Obtenemos listas iniciales, sin parametros
         ArrayList<Archivo> local = Utilidades.listFiles(workingPath);
-        if (local != null) {
-            local.sort((a, b) -> a.ruta.compareTo(b.ruta));
-            System.out.println("tamaño lista local="+local.size()); //TESTS
-            local.forEach(c-> System.out.println(c.ruta)); //TESTS
-        }
+//        if (local != null) {
+//            local.sort((a, b) -> a.ruta.compareTo(b.ruta));
+//            System.out.println("tamaño lista local="+local.size()); //TESTS
+//            local.forEach(c-> System.out.println(c.ruta)); //TESTS
+//        }
 
         ArrayList<Archivo> remota = remoteServer.listaArchivos(user);
-        if (remota != null) {
-            remota.sort((a, b) -> a.ruta.compareTo(b.ruta));
-            System.out.println("\ntamaño lista remota="+remota.size()); //TESTS
-            remota.forEach(c-> System.out.println(c.ruta)); //TESTS
+//        if (remota != null) {
+//            remota.sort((a, b) -> a.ruta.compareTo(b.ruta));
+//            System.out.println("\ntamaño lista remota="+remota.size()); //TESTS
+//            remota.forEach(c-> System.out.println(c.ruta)); //TESTS
+//        }
+
+        boolean hayElementosEnLocal = (local != null && local.size() >1) ;
+        boolean hayElementosEnRemoto = (remota != null && remota.size() >1) ;
+
+
+        // Si no hay archivos en loca, pero si en remoto, descargamos
+        if(!hayElementosEnLocal && hayElementosEnRemoto) {
+            for (Archivo archivo : remota) {
+                try {
+                    ejecutarOperacion(archivo , VariablesGlobales.DOWNLOAD);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return;
         }
-        
 
 
-        
-        
+        // Si no hay en remota, pero si en local
+        if(!hayElementosEnRemoto && hayElementosEnLocal) {
+            for (Archivo archivo : local) {
+                try {
+                    ejecutarOperacion(archivo , VariablesGlobales.UPLOAD);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return;
+        }
 
-        HashMap<Archivo , Integer> pendientes = Utilidades.operacionesIniciales(local, remota, workingPath);
 
-        return ejectuarOperaciones(pendientes);
+
+        // LLegamos aqui si hay archivos tanto en remota como en local
+
+
+
+        // Primero comprobamos aquellos archivos que no estan presentes en local o remoto, para directamente
+        // cargarlos o descargarlos. Esto ahorra tiempo procesando y transmitiendo metadatos que no van a tener uso
+        HashMap<Archivo , Integer> operaciones = Utilidades.compararListas(local, remota, timeOffset, false);
+
+        // Ejecutamos las operaciones tipo UPLOAD y DOWNLOAD, y los archivos con operaciones tipo MORE_INFO los añadimos a una lista
+        // para pedir los metadatos de esos archivos
+        ArrayList<Archivo> pendientesPorFaltaDeMetadatos = ejectuarOperaciones(operaciones);
+
+        // Si no hay archivos pendientes por falta de metadatos, volvemos
+        if(   !(pendientesPorFaltaDeMetadatos != null && pendientesPorFaltaDeMetadatos.size() >1 )   ) {
+            return;
+        }
+
+        // Obtenemos los metadatos de los archivos remotos y locales
+        remota = remoteServer.obtenerMetadatos(user, pendientesPorFaltaDeMetadatos);
+        local = Utilidades.obtenerMultiplesMetadatos(pendientesPorFaltaDeMetadatos, workingPath);
+
+        // Comparamos las dos listas para determinar las operaciones a realizar
+        operaciones = Utilidades.compararListas(local, remota, timeOffset, true);
+
+        // Ejecutamos las operaciones necesarias.
+        // En este punto ya todos los archivos han sido comparados y no necesitamos volver a iterar la lista de pendientes (sera nula=
+        ejectuarOperaciones(operaciones);
+
+
     }
 
 
-    public ArrayList<Archivo> siguienteIteracion(ArrayList<Archivo> pendientes) throws RemoteException {
-        //Seguda parte, intercambiar archivos ya existentes
-        if(pendientes == null || pendientes.size() < 1) return null;
-
-        ArrayList<Archivo> local = Utilidades.obtenerParametrosSimultaneos(pendientes, workingPath);
-
-        System.out.println("info local");
-        local.forEach(System.out::println);
-
-        ArrayList<Archivo> remota = remoteServer.obtenerParametrosSimultaneos(user, pendientes);
-
-        System.out.println("info remota");
-        remota.forEach(System.out::println);
-        HashMap< Archivo, Integer> operaciones = Utilidades.compararParametrosSimultaneos(local, remota, timeOffset, workingPath);
-        
-        if(operaciones == null || operaciones.size() == 0) return null;
-
-        return ejectuarOperaciones(operaciones);
-    }
 
 
     public void calcularOffset(int maxIntentos) throws RemoteException {

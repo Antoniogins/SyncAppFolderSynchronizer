@@ -34,10 +34,10 @@ import com.syncapp.server.SyncAppServer;
  *             con aquellos archivos que necesitan mas informacion ({@link String hash}, {@link Long ultima hora modificacion}) para determinar si cargalos o descargarlos.
  *         </li>
  *         <li>
- *             {@link SyncAppCliente#primeraIteracion() Cargar} aquellos archivos que seguro sabemos que necesitan cargarse/descargarse.
+ *             {@link SyncAppCliente#sincronizarConServidor() Cargar} aquellos archivos que seguro sabemos que necesitan cargarse/descargarse.
  *         </li>
  *         <li>
- *             Para aquellos archivos que necesitan mas informacion, {@link #obtenerParametrosSimultaneos(TokenUsuario, ArrayList) obtenerla}.
+ *             Para aquellos archivos que necesitan mas informacion, {@link #obtenerMetadatos(TokenUsuario, ArrayList) obtenerla}.
  *         </li>
  *         <li>
  *             Cargar/descargar aquellos archivos que se consideren necesarios.
@@ -206,7 +206,7 @@ public interface SyncApp extends Remote {
      * contiene en su carpeta contenedora dentro del servidor.
      * <br>
      * Esta lista de archivos no contiene metadatos sobre los archivos (hash, hora ultima modificacion), para ello se debe
-     * ejecutar {@link #obtenerParametrosSimultaneos(TokenUsuario, ArrayList)}.
+     * ejecutar {@link #obtenerMetadatos(TokenUsuario, ArrayList)}.
      *
      * @param usuario {@link TokenUsuario Usuario} cuya lista se quiere obtener. Previamente debe haber iniciado sesion.
      * @return {@link ArrayList} de {@link Archivo} sin metadatos.
@@ -221,7 +221,7 @@ public interface SyncApp extends Remote {
      * @return {@link ArrayList} de {@link Archivo} con metadatos.
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
-    ArrayList<Archivo> obtenerParametrosSimultaneos(TokenUsuario usuario, ArrayList<Archivo> lista) throws RemoteException;
+    ArrayList<Archivo> obtenerMetadatos(TokenUsuario usuario, ArrayList<Archivo> lista) throws RemoteException;
 
 
 
