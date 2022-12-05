@@ -1,11 +1,7 @@
 package com.syncapp.cliente;
 
-import java.awt.*;
 import javax.swing.*;
-
-import com.syncapp.server.SyncAppServer;
-import com.syncapp.utility.Utilidades;
-
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

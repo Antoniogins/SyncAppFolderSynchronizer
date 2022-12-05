@@ -34,7 +34,7 @@ public class Archivo implements Serializable {
     @Override
     public String toString() {
         String toRet = "[\"";
-        toRet = toRet.concat(ruta+",");
+        toRet = toRet.concat(ruta+"],");
         toRet = toRet.concat(  (hash == null)? "no_hash," : (hash+",") );
         toRet = toRet.concat(  (timeMilisLastModified < 0)? "no_time" : (""+timeMilisLastModified)  );
         return toRet+"]";
