@@ -30,7 +30,6 @@ public class Upload implements Runnable{
         Path path = Paths.get(ruta.ruta);
         Path wfold = Paths.get(pathlocal);
         this.ruta = new Archivo( path , wfold);
-        this.abs = wfold;
         this.abs = wfold.resolve(path);
 
 

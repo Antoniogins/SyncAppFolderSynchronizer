@@ -40,8 +40,7 @@ import com.syncapp.utility.Utilidades;
  *             {@link #listaArchivos(TokenUsuario) carpeta dentro del servidor} y su {@link com.syncapp.utility.Utilidades#listFiles(Path) carpeta a sincronizar}.
  *         </li>
  *         <li>
- *             {@link com.syncapp.utility.Utilidades#operacionesIniciales(ArrayList, ArrayList, Path) Comprobar} que
- *             archivos faltan en el servidor o en su pc. Esto devolvera una {@link ArrayList<Archivo> lista} de {@link Archivo Archivos}
+ *             Comprobar que archivos faltan en el servidor o en su pc. Esto devolvera una {@link ArrayList<Archivo> lista} de {@link Archivo Archivos}
  *             con aquellos archivos que necesitan mas informacion ({@link String hash}, {@link Long ultima hora modificacion}) para determinar si cargalos o descargarlos.
  *         </li>
  *         <li>
@@ -105,61 +104,13 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
 
     /**
-     * Registro para almacenar las sesiones de usuario activas. <br>
-     * Se almacena la pareja {@link Integer identificador unico de sesion}/{@link TokenUsuario usuario que realiza la sesion}
-     */
-    HashMap< String, TokenUsuario> sesionesUsuarioActivas;
-
-    /**
-     * Registro para almacenar los identificadores de sesiones que ya han sido usados (int).
-     */
-    ArrayList<String> memoriaDeSesiones;
-
-    /**
-     * Registro para almacenar que archivos estan siendo leidos/escritos.
-     * <br>
-     * Se almacena la pareja {@link Integer identificador del archivo}/{@link Path ruta del archivo}
-     */
-    HashMap< Integer , Path> archivosActivos;
-
-    /**
-     * Registro para llevar un control sobre la posicion de lectura/escritura de un archivo.
-     * <br>
-     * Se almacena la pareja {@link Integer identificador de archivo}/{@link Long posicion del primer byte} que se necesita leer/escribir
-     */
-    HashMap< Integer, Long> posicionByteActual;
-
-    /**
-     * Registro para llevar un control sobre cual es el ultimo bloque de datos que ha sido enviado.
-     * <br>
-     * Se almacena la pareja {@link Integer identificador de archivo}/{@link Integer identificador del ultimo bloque enviado}
-     */
-    HashMap< Integer, Integer> ultimoBloqueEnviado;
-
-    /**
-     * Registro para almacenar la referencia al lector de archivos de un archivo dado.
-     * <br>
-     * Se almacena la pareja {@link Integer identificador de archivo}/{@link LectorArchivos}
-     */
-    HashMap< Integer, LectorArchivos> lectoresArchivo;
-
-
-    /**
-     * Registro de archivos activos para una sesion de usuario. Esto es conviniente cuando existen varias sesiones de un
-     * mismo usuario. <br>
-     * Se almacena la pareja {@link Integer id_sesion}/{@link ArrayList}<{@link Path}>
-     */
-    HashMap< String, ArrayList<String> > archivosActivosEnSesion;
-
-    /**
-     * Identificador global de archivos, que sirve para poner un id a cada uno de los archivos, de forma ordenada.
-     */
-    static int globalFileID;
-
-    /**
      * Nos permite almacenar contenido a un log, por ejemplo inicio de sesion, archivos cargados, errores, etc.
      */
     Logger logger;
+
+    FileHandler fileHandler;
+
+    UserHandler userHandler;
     
 
 
@@ -177,21 +128,11 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     public SyncAppServer() throws RemoteException {
         super();
 
-        // Inicializamos los registros de usuarios
-        sesionesUsuarioActivas = new HashMap<>();
-        memoriaDeSesiones = new ArrayList<>();
-
-
-        // Inicializamos los registros de archivos
-        archivosActivos = new HashMap<>();
-        globalFileID = 0;
-        archivosActivosEnSesion = new HashMap<>();
-
 
         // Inicializamos el registro de lectores de archivos
-        lectoresArchivo = new HashMap<>();
-        ultimoBloqueEnviado = new HashMap<>();
-        posicionByteActual = new HashMap<>();
+        fileHandler = new FileHandler(usersContainers);
+        userHandler = new UserHandler();
+
 
         // Inicializamos el Logger
         logger = Logger.getLogger("com.syncapp.server.SyncAppServer");
@@ -227,31 +168,12 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         if(usuario == null) return null;
         if(usuario.name.length() <1) return null;
 
-        // Asignamos un identificador unico al usuario
-        // Para ello, creamos un numero aleatorio, y reintentamos hasta que el numero obtenido no haya sido
-        // anteriormente seleccionado a un usuario (memoriaDeSesiones)
-        String id = "";
-        do {
-            id = ""+( (int) (Math.random()*10000) );
-        } while (memoriaDeSesiones.contains(id));
+        String sessionId = userHandler.iniciarSesion(usuario);
+        usuario.session_id = sessionId;
 
-        // Ponemos a usuario su id
-        usuario.session_id = id;
+        logger.info("usuario "+usuario+" ha iniciado sesion");
+        return sessionId;
 
-        // Añadimos el usuario al registro de sesiones activas, y al registro de identificadores de usuario ya usados
-        memoriaDeSesiones.add(id);
-        sesionesUsuarioActivas.put(id, usuario);
-        archivosActivosEnSesion.put(id, new ArrayList<>() );
-
-        // Loggeamos el inicio de sesion
-        try {
-            logger.info("ha iniciado sesion: "+usuario+" desde la direccion "+getClientHost());
-        } catch (ServerNotActiveException e) {
-            logger.severe("error al iniciar sesion el usuario "+usuario);
-            throw new RuntimeException(e);
-        }
-
-        return id;
         
     }
 
@@ -263,7 +185,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * <ul>
      *     <li>
      *         Alguno de los parametros dados no sea nulo.
-     *     </li>
+     *     </li> userFromSessionId.get(sessionId).name
      *     <li>
      *         La operacion indicada sea "r" o "rw".
      *     </li>
@@ -288,40 +210,36 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         if(usuario == null || archivo == null || !(op_mode.equals("r") || op_mode.equals("rw"))){
             return -1;
         }
-        if(!sesionesUsuarioActivas.containsKey(usuario.session_id)) { return -1; }
 
+        // Comprobamos que el usuario tenga una sesion activa
+        if(!userHandler.isSessionActive(usuario.session_id)) { return -1; }
 
         // Obtenemos el path absoluto dentro del archivo, dentro del servidor
         Path filepath = usersContainers.resolve(usuario.name).resolve(archivo.ruta);
 
-        // Comprobamos si este archivo ya estaba en el registro de archivos activos
-        if(archivosActivos.containsKey(filepath)) {
-            return -1; // Si el archivo ya esta abierto devolvemos -1, ya que no se puede acceder al mismo archivo de forma simultanea
+        // Comprobamos si el archivo ya esta siendo escrito
+        if(fileHandler.isFileOpened(filepath.toString())) {
+            return -1; // Dos sesiones no pueden escribir el mismo archivo simultaneamente
         }
-
-        // Asignamos un identificador unico al archivo, y lo almacenamos en el registro de archivos activos
-        int file_id = globalFileID++;
-        archivosActivos.put(file_id, filepath);
-
-        // Indicamos que el ultimo bloque enviado es -1, para el correcto funcionamiento del transmisor
-        ultimoBloqueEnviado.put(file_id, -1);
-
-        // Intentamos crear el lector de archivos y añadirlo al mapa de lector de archivo para el archivo dado
-        try {
-            lectoresArchivo.put(file_id, new LectorArchivos(filepath, op_mode, file_id));
-        } catch (IOException e1) {
-            logger.severe("error al crear el lector de archivos para el archivo \""+filepath+"\"");
-            e1.printStackTrace();
-            throw new RemoteException("Error al abrir archivo en servidor");
-        }
-
-        // Añadimos este archivo a la lista de archivos activos para una sesion
-        archivosActivosEnSesion.get(usuario.session_id).add(""+file_id);
 
         // Loggeamos la apertura del archivo
-        logger.info("abriendo archivo "+archivo+" modo "+op_mode);
+        logger.info("abriendo archivo " + archivo + " modo " + op_mode);
 
-        return file_id;
+
+        System.out.println(filepath.toString());
+
+        if(op_mode.equals("rw")) {
+            int fileId = fileHandler.newFile(filepath.toString());
+            try {
+                fileHandler.openFile(filepath.toString());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return fileId;
+        } else {
+            return fileHandler.getFileId(filepath.toString());
+        }
+
     }
 
 
@@ -355,18 +273,12 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     public void cerrarSesion(TokenUsuario usuario) throws RemoteException {
         if(usuario == null) return;
 
-
-        // Eliminamos el usuario de los registros de sesion, y eliminamos su id de sesion para que quede libre para otro usuario
-        sesionesUsuarioActivas.remove(usuario.session_id);
-        memoriaDeSesiones.remove(usuario.session_id);
-
-        // Comprobamos si hay archivos en la lista de archivos activos de un usuario.
-        if(archivosActivosEnSesion.containsKey(usuario.session_id)) {
-            archivosActivosEnSesion.get(usuario.session_id).forEach(c -> {
-                archivosActivosEnSesion.get(usuario.session_id).remove(c);
-            });
-            archivosActivosEnSesion.remove(usuario.session_id);
+        ArrayList<Integer> archivosACerrar = userHandler.listFilesForSession(usuario.session_id);
+        if(archivosACerrar != null) {
+            archivosACerrar.forEach(fileHandler::closeFile);
         }
+
+        userHandler.cerrarSesion(usuario.session_id);
 
         logger.info("usuario "+usuario+" ha cerrado sesion");
     }
@@ -374,35 +286,19 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
     /**
      * Este metodo permite cerrar la lectura/escritura de un archivo, liberando asi el recurso para otros usuarios.
-     * @param id_file identificador unico del archivo.
+     * @param fileId identificador unico del archivo.
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     @Override
-    public void cerrarArchivo(int id_file, TokenUsuario usuario) throws RemoteException {
-        if(id_file <0 ) return;
+    public void cerrarArchivo(int fileId, TokenUsuario usuario) throws RemoteException {
+        if(fileId <0 ) return;
 
 
         // Mostramos informacion
-        logger.info("cerrando archivo "+archivosActivos.get(id_file));
+        logger.info("cerrando archivo "+fileHandler.getFilePath(fileId));
 
-
-        // Removemos el archivo de la lista de archivo para la sesion x
-        archivosActivosEnSesion.get(usuario.session_id).remove(""+id_file);
-
-
-        // Removemos el lector de archivos y la entrada del mismo, para el archivo dado
-        try {
-            lectoresArchivo.get(id_file).cerrarArchivo();
-        } catch (IOException e) {
-            logger.severe("error al cerrar el archivo "+id_file);
-            throw new RuntimeException(e);
-        }
-        lectoresArchivo.remove(id_file);
-
-        // Removemos el archivo dado de la lista de archivos activos
-        archivosActivos.remove(id_file);
-
-
+        userHandler.cerrarArchivo(fileId);
+        fileHandler.closeFile(fileId);
 
     }
 
@@ -446,7 +342,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     public ArrayList<Archivo> listaArchivos(TokenUsuario usuario) throws RemoteException {
 
         // Comprobamos que el usuario tenga una sesion activa
-        if(!sesionesUsuarioActivas.containsKey(usuario.session_id)) return null;
+        if(!userHandler.isSessionActive(usuario.session_id)) return null;
 
         // Obtenemos la carpeta contenedora del usuario
         Path toWalk = Paths.get(usersContainers.toString() , usuario.name);
@@ -459,7 +355,6 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
         // Mostramos informacion
         logger.info("listando archivos para "+usuario+" total de elementos="+listaRet.size());
-
 
         return listaRet;
     }
@@ -476,7 +371,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     public ArrayList<Archivo> obtenerMetadatos(TokenUsuario usuario, ArrayList<Archivo> lista)
             throws RemoteException {
 
-        if(!sesionesUsuarioActivas.containsKey(usuario.session_id) || lista == null || lista.size() == 0){
+        if(!userHandler.isSessionActive(usuario.session_id) || lista == null || lista.size() == 0){
             return null;
         }
 
@@ -517,7 +412,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * Los bloques se leen a traves de un {@link com.syncapp.utility.LectorArchivos}, que nos permite
      * realizar esta lectura con offset, etc.
      *
-     * @param id_file identificador unico del archivo.
+     * @param fileId identificador unico del archivo.
      * @param position posicion a partir de la cual se lee el archivo:
      *                 <ul>
      *                 <li>
@@ -531,21 +426,26 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     @Override
-    public BloqueBytes leerBloqueBytes(int id_file, long position) throws RemoteException {
+    public BloqueBytes leerBloqueBytes(int fileId, long position) throws RemoteException {
 
-        // Obtenemos el lector de archivos
-        LectorArchivos archivoActual = lectoresArchivo.get(id_file);
 
+        LectorArchivos archivoActual = null;
+        BloqueBytes bb = null;
 
         try {
-            logger.info("obteniendo bloque del archivo "+id_file);
-            return archivoActual.leerBloqueBytesEnPosicion(position);
+            archivoActual = new LectorArchivos(fileHandler.getFilePath(fileId), "r" , fileId);
+            logger.info("obteniendo bloque del archivo "+fileId);
+            bb = archivoActual.leerBloqueBytesEnPosicion(position);
+            archivoActual.cerrarArchivo();
 
         } catch (IOException e) {
-            logger.severe("error al leer el bloque "+" position del archivo "+id_file);
+            logger.severe("error al leer el bloque "+" position del archivo "+fileId);
             e.printStackTrace();
             throw new RemoteException("Error al leer un bloque de bytes");
         }
+
+        return bb;
+
         
     }
 
@@ -561,7 +461,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * Los bloques se escriben a traves de un {@link com.syncapp.utility.LectorArchivos}, que nos permite
      * realizar esta escritura con offset, etc.
      *
-     * @param id_file identificador unico del archivo.
+     * @param fileId identificador unico del archivo.
      * @param bloq_bytes {@link BloqueBytes} a transimitir.
      * @param pos posicion a partir de la cual se escribe el archivo:
      *                   <ul>
@@ -576,10 +476,10 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     @Override
-    public void escribirBloqueBytes(int id_file, BloqueBytes bloq_bytes, int pos) throws RemoteException {
-        if(bloq_bytes == null || bloq_bytes.size < 1 || id_file < 0) return;
+    public void escribirBloqueBytes(int fileId, BloqueBytes bloq_bytes, int pos) throws RemoteException {
+        if(bloq_bytes == null || bloq_bytes.size < 1 || fileId < 0) return;
 
-        LectorArchivos actual = lectoresArchivo.get(id_file);
+        LectorArchivos actual = fileHandler.getWriter(fileId);
         try {
             logger.info("escribiendo el bloque "+bloq_bytes);
             actual.escribirBloqueBytesEnPosicion(bloq_bytes, pos);

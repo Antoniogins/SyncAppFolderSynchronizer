@@ -23,6 +23,7 @@ public class Download implements Runnable {
     TokenUsuario usuario;
     LectorArchivos la;
     int ultimo_recibido;
+    long posicion;
 
     public Download(SyncApp server, Archivo ruta, String pathlocal, TokenUsuario usuario) throws IOException {
         this.server = server;
@@ -36,13 +37,13 @@ public class Download implements Runnable {
 
         this.la = new LectorArchivos(abs, "rw", 0);
         ultimo_recibido = -1; //Replica de upload
+        posicion = 0;
     }
 
 
     public void run() {
         try {
             id_file = server.abrirArchivo(usuario, ruta, "r");
-            // System.out.println("id_File"+id_file);
         } catch (RemoteException e1) {
             e1.printStackTrace();
             return;
@@ -51,43 +52,32 @@ public class Download implements Runnable {
         System.out.println("bajando file="+id_file+" ruta="+ruta.toString());
 
 
-        boolean keep = true;
+        boolean keepTransmission = true;
         BloqueBytes bb = null;
-        boolean saltarLectura = false;
-        boolean reintentarRemoto = false;
+        boolean leerBytes = true;
 
-        while (keep) {
-            if (!saltarLectura) {
+        while (keepTransmission) {
+            if (leerBytes) {
 
                 try {
-                    if (reintentarRemoto) {
-
-                        // Analgo a Upload (se nota cual hicimos primero????)
-                        bb = server.leerBloqueBytes(id_file, (ultimo_recibido + 1)* VariablesGlobales.MAX_BYTES_IN_BLOCK );
-                        reintentarRemoto = false;
-
-                    } else {
-
-                        // Indicamos -1 para que el lector de archivos se encarge de gestionar la
-                        // posicion
-                        bb = server.leerBloqueBytes(id_file, -1);
-
-                    }
+                    bb = server.leerBloqueBytes(id_file, posicion);
+                    posicion += bb.size;
 
                 } catch (RemoteException e) {
                     e.printStackTrace();
                     System.out.println("reintentando recibir file="+id_file+" bloque="+(ultimo_recibido+1));
-                    reintentarRemoto = true;
                 }
 
-                // Comprobamos si bloque es null o su tamaño es 0, esto indica que hemos acabado
-                // de leer el archivo, salimos
-                if (bb == null || bb.size == 0) {
-                    keep = false;
-                    continue;
+
+
+                if(bb == null) {
+                    return;
+                } else if(bb.size < VariablesGlobales.MAX_BYTES_IN_BLOCK) {
+                    keepTransmission = false;
                 }
 
             }
+
 
             // Si se activa intentarRemoto es porque ha fallado al enviar el ultimo bloque,
             // por tanto no leemos e intentamos reenviar ese bloque fallido, que todavia lo
@@ -99,25 +89,21 @@ public class Download implements Runnable {
 
                 // Si se ejecuta este bloque es porque escribirBloque no ha fallado,
                 // dejamos de reintentarlo
-                saltarLectura = false;
+                leerBytes = true;
                 ultimo_recibido++;
                 // System.out.println(bb.toString());
 
             } catch (IOException e) {
                 e.printStackTrace();
                 System.out.println("Reintentando escribir file="+id_file+" bloque="+(ultimo_recibido+1));
-                saltarLectura = true;
-                // Queremos que salte la lectura para que intente reenvia el ultimo bloque que
+                leerBytes = false;
+                // Queremos que salte la lectura para que intente escribir el ultimo bloque, que
                 // todavia tenemos en memoria
             }
 
         }
 
-        try {
-            server.cerrarArchivo(id_file, usuario);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+
         
         try {
             la.cerrarArchivo();

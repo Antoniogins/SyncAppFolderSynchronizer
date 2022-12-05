@@ -171,6 +171,7 @@ public class ClienteCLI {
                     }
                     case "sincronizar" -> {
                         cliente.sincronizarConServidor();
+                        cliente.esperarHastaTerminarTransmisiones();
                     }
                     case "delete" -> {
                     }

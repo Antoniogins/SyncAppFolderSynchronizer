@@ -11,7 +11,7 @@ public class Archivo implements Serializable {
     public String hash;
     public long timeMilisLastModified; //TODO CAMBIAR LISTAR ARCHIVOS PARA QUE INCLUYA TIME
     public long sizeInBytes;
-    public long fhid;
+    public String remoteID;
 
 
 
@@ -32,6 +32,7 @@ public class Archivo implements Serializable {
 
     public Archivo(String pathRelativo) {
         this.ruta = new String(pathRelativo);
+        timeMilisLastModified = -1;
     }
 
 
@@ -57,4 +58,6 @@ public class Archivo implements Serializable {
     public File toFile() {
         return Paths.get(workingFOlder , ruta).toFile();
     }
+
+
 }

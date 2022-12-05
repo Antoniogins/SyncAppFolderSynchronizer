@@ -21,14 +21,7 @@ public class LectorArchivos {
 
     
 
-    /**
-     * 
-     * @param path
-     * @param op_mode
-     * @throws IOException 
-     * @throws FileNotFoundException 
-     *         
-     */
+
     public LectorArchivos(Path path, String op_mode, int id_file) throws IOException { //r:read rw:read and write
         if(id_file <0 ) return;
 
@@ -71,12 +64,6 @@ public class LectorArchivos {
     }
     
 
-   
-
-
-    public BloqueBytes leerSiguienteBloque() throws IOException {
-        return leerBloqueBytesEnPosicion(-1); //Ahorramos codigo, indicando -1 le decimos que no mueva el offset
-    }
 
     //importante, cuando movemos el offset, volvemos a empezar a leer desde ese punto?
     public BloqueBytes leerBloqueBytesEnPosicion(long posicion) throws IOException { //Indicar -1 cuando no se quiere desplazar el offset
@@ -109,9 +96,6 @@ public class LectorArchivos {
         byte[] realinfo;
         if(realBytes != bytes.length) {
             realinfo = new byte[realBytes];
-            // for (int i = 0; i < realinfo.length; i++) {
-            //     realinfo[i] = bytes[i];
-            // }
             System.arraycopy(bytes, 0, realinfo, 0, realBytes);
 
 
