@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.syncapp.model.Archivo;
-import com.syncapp.utility.Operaciones;
+import com.syncapp.utility.VariablesGlobales;
 import com.syncapp.utility.Utilidades;
 
 import static java.nio.file.StandardWatchEventKinds.*;
@@ -215,7 +215,7 @@ public class ServicioMonitorizacion implements Runnable {
                 try {
 //                    Path relativo = sac.getWorkingPath().relativize(a);
                     System.out.println("enviando archivo="+a);
-                    sac.ejecutarOperacion(new Archivo(a , sac.getWorkingPath()) , Operaciones.UPLOAD);
+                    sac.ejecutarOperacion(new Archivo(a , sac.getWorkingPath()) , VariablesGlobales.UPLOAD);
                     listaDeRelojesABorrarSincronamente.add(a);
 
                 } catch (IOException e) {

@@ -11,6 +11,7 @@ import com.syncapp.model.Archivo;
 import com.syncapp.model.TokenUsuario;
 import com.syncapp.utility.LectorArchivos;
 import com.syncapp.utility.Utilidades;
+import com.syncapp.utility.VariablesGlobales;
 
 public class Upload implements Runnable{
     
@@ -60,7 +61,7 @@ public class Upload implements Runnable{
             if (!saltarLectura) {
                 try {
                     if(reintentarLocal) {
-                        bb = la.leerBloqueBytesEnPosicion((ultimo_enviado + 1)* Utilidades.MAX_BYTES_IN_BLOCK );
+                        bb = la.leerBloqueBytesEnPosicion((ultimo_enviado + 1)* VariablesGlobales.MAX_BYTES_IN_BLOCK );
                         // Cuando reintentamos enviar un bloque, sabemos que su posicion inicial es su
                         // identificador*MAX_BYTES
                         // Pero como unicamente conocemos el ultimo bloque enviado, si le sumamos uno

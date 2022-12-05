@@ -13,7 +13,6 @@ public class LectorArchivos {
     long posittion; //cambiar mas tarde
 
     public int ultimoEnviado;
-    public static int MAX_BYTES = Utilidades.MAX_BYTES_IN_BLOCK; //80kBytes aunque se puede aumentar
     public int id_file;
 
     
@@ -97,7 +96,7 @@ public class LectorArchivos {
 
         
         int realBytes = 0;
-        byte[] bytes = new byte[Utilidades.MAX_BYTES_IN_BLOCK];
+        byte[] bytes = new byte[VariablesGlobales.MAX_BYTES_IN_BLOCK];
 
         realBytes = raf.read(bytes); //Lectura
         if(realBytes < 1) return null;

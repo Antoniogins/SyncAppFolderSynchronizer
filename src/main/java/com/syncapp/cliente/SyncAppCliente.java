@@ -17,7 +17,7 @@ import com.syncapp.interfaces.SyncApp;
 import com.syncapp.model.Archivo;
 import com.syncapp.model.TokenUsuario;
 import com.syncapp.utility.Utilidades;
-import com.syncapp.utility.Operaciones;
+import com.syncapp.utility.VariablesGlobales;
 
 public class SyncAppCliente {
 
@@ -316,17 +316,17 @@ public class SyncAppCliente {
     //devuelve >0 si la operacion ya se ha ejecutado y <0 si el archivo necesita mas informacion para decidir que ejecutar
     public int ejecutarOperacion(Archivo a, int operacion) throws IOException {
         int returner = 1;
-        System.out.println(Operaciones.toString(operacion)+": "+a.ruta);
+        System.out.println(VariablesGlobales.toString(operacion)+": "+a.ruta);
         switch(operacion){
-            case Operaciones.UPLOAD : {
+            case VariablesGlobales.UPLOAD : {
                 exec.execute(new Upload(remoteServer, a, workingPath.toString() , user)); 
                 break;
             }
-            case Operaciones.DOWNLOAD : {
+            case VariablesGlobales.DOWNLOAD : {
                 exec.execute(new Download(remoteServer, a, workingPath.toString() , user));
                 break;
             }
-            case Operaciones.MORE_INFO : {
+            case VariablesGlobales.MORE_INFO : {
                 returner = -1;
                 break;
             }
