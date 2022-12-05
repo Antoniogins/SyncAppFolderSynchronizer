@@ -38,20 +38,12 @@ public class ClienteGUI extends JFrame implements ActionListener {
 
 		pcentral.add(pinformacion);
 
-		/*
-		 * //paneles de la parte inferior
-		 * JPanel salidatexto = new JPanel (new FlowLayout());
-		 * salidatexto.add(new JLabel (String.valueOf(cliente.getTimeOffset())));
-		 * 
-		 * 
-		 * JPanel conexion = new JPanel (new FlowLayout());
-		 * conexion.add(new JLabel(String.valueOf(cliente.getRemoteServer())));
-		 * 
-		 * 
-		 * pinferior.add(salidatexto);
-		 * pinferior.add(conexion);
-		 * 
-		 */
+		//paneles de la parte inferior
+		JPanel salidatexto = new JPanel (new FlowLayout());
+		JPanel conexion = new JPanel (new FlowLayout());
+		pinferior.add(salidatexto);
+		pinferior.add(conexion);
+
 
 		// creamos los botones y los añadimos al panel
 		bservidor = new JButton("Seleccionar servidor");
@@ -92,6 +84,10 @@ public class ClienteGUI extends JFrame implements ActionListener {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 	}
+ 
+ void updatePanels() {
+
+ }
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
