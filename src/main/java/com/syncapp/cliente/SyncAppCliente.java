@@ -421,10 +421,10 @@ public class SyncAppCliente {
 
 
 
-    public void calcularOffset(int maxIntentos) throws RemoteException {
-        long[] rttS = new long[maxIntentos];
-        long[] horaServ = new long[maxIntentos];
-        long[] t1S = new long[maxIntentos];
+    public void calcularOffset(int maxIteraciones) throws RemoteException {
+        long[] rttS = new long[maxIteraciones];
+        long[] horaServ = new long[maxIteraciones];
+        long[] t1S = new long[maxIteraciones];
         int menor = 0;
 
         // Calculamos varios RTT y nos quedamos con el menor, y la hora del servidor

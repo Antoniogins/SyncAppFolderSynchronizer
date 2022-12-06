@@ -128,14 +128,15 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     public SyncAppServer() throws RemoteException {
         super();
 
-
-        // Inicializamos el registro de lectores de archivos
+        // Inicializamos el registro de archivos
         fileHandler = new FileHandler(usersContainers);
+
+        // Inicializamos el registro de usuarios
         userHandler = new UserHandler();
 
 
         // Inicializamos el Logger
-        logger = Logger.getLogger("com.syncapp.server.SyncAppServer");
+        logger = Logger.getLogger("Logger");
 
 
     }
@@ -225,8 +226,6 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         // Loggeamos la apertura del archivo
         logger.info("abriendo archivo " + archivo + " modo " + op_mode);
 
-
-        System.out.println(filepath.toString());
 
         if(op_mode.equals("rw")) {
             int fileId = fileHandler.newFile(filepath.toString());

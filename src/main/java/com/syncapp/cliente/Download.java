@@ -71,7 +71,7 @@ public class Download implements Runnable {
 
 
                 if(bb == null) {
-                    return;
+                    continue;
                 } else if(bb.size < VariablesGlobales.MAX_BYTES_IN_BLOCK) {
                     keepTransmission = false;
                 }
