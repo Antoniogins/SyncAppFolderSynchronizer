@@ -1,29 +1,26 @@
 package com.syncapp.cliente;
 
+import com.syncapp.interfaces.SyncApp;
+import com.syncapp.model.Archivo;
+import com.syncapp.model.BloqueBytes;
+import com.syncapp.model.TokenUsuario;
+import com.syncapp.utility.LectorArchivos;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 
-import com.syncapp.interfaces.SyncApp;
-import com.syncapp.model.BloqueBytes;
-import com.syncapp.model.Archivo;
-import com.syncapp.model.TokenUsuario;
-import com.syncapp.utility.LectorArchivos;
-import com.syncapp.utility.Utilidades;
-import com.syncapp.utility.VariablesGlobales;
+public class Download implements Runnable{
 
-
-public class Download implements Runnable {
-    
     SyncApp server;
-    int id_file;
+    int fileId;
     Archivo ruta;
     Path abs;
     TokenUsuario usuario;
-    LectorArchivos la;
-    int ultimo_recibido;
-    long posicion;
+    LectorArchivos lectorArchivos;
+//    int ultimo_enviado;
+    long posicionActual;
 
     public Download(SyncApp server, Archivo ruta, String pathlocal, TokenUsuario usuario) throws IOException {
         this.server = server;
@@ -35,82 +32,192 @@ public class Download implements Runnable {
         this.abs = wfold.resolve(path);
 
 
-        this.la = new LectorArchivos(abs, "rw", 0);
-        ultimo_recibido = -1; //Replica de upload
-        posicion = 0;
+
+        this.lectorArchivos = new LectorArchivos(abs, "rw", 999);
+//        ultimo_enviado = -1; //Todavia no se ha enviado ninguno
+        posicionActual = 0;
     }
+
+
+
+
+    boolean siguienteBloque() {
+        BloqueBytes bloque = new BloqueBytes();
+
+        boolean reintentarLectura = true;
+        while(reintentarLectura) {
+            try {
+                bloque = server.leerBloqueBytes(fileId, posicionActual);
+
+                // Llegamos unicamente a este putno si leerBloqueBytes tiene exito
+                reintentarLectura = false;
+            } catch (RemoteException e) {
+                System.out.println("reintentando leer file="+ fileId +" pos="+posicionActual);
+                e.printStackTrace();
+            }
+        }
+
+        if(bloque == null) {
+            return false;
+        }
+
+
+        boolean reintentarEnvio = true;
+        while (reintentarEnvio) {
+            try {
+                lectorArchivos.escribirBloqueBytes(bloque);
+
+                // Si llegamos a este punto, es que escribir el bloque en el servidor ha tenido exito
+                reintentarEnvio = false;
+                posicionActual += bloque.size;
+
+
+            } catch (IOException e) {
+                System.out.println("reintentando leer file=\""+ fileId +"\" pos=\""+posicionActual);
+            }
+        }
+
+        // si todas las operaciones se han realizado con exito, llegaremos a este punto
+        return true;
+    }
+
+
+
+
+
+
+
 
 
     public void run() {
         try {
-            id_file = server.abrirArchivo(usuario, ruta, "r");
+            fileId = server.abrirArchivo(usuario, ruta, "r");
         } catch (RemoteException e1) {
             e1.printStackTrace();
             return;
         }
-        la.id_file = id_file;
-        System.out.println("bajando file="+id_file+" ruta="+ruta.toString());
+        System.out.println("bajando file="+ fileId +" ruta="+ruta.toString());
+
+        lectorArchivos.setFileId(fileId);
+        ruta.remoteID = ""+fileId;
 
 
-        boolean keepTransmission = true;
-        BloqueBytes bb = null;
-        boolean leerBytes = true;
-
-        while (keepTransmission) {
-            if (leerBytes) {
-
-                try {
-                    bb = server.leerBloqueBytes(id_file, posicion);
-                    posicion += bb.size;
-
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                    System.out.println("reintentando recibir file="+id_file+" bloque="+(ultimo_recibido+1));
-                }
+        boolean quedanBloques;
+        do {
+            quedanBloques = siguienteBloque();
+        } while (quedanBloques);
 
 
-
-                if(bb == null) {
-                    continue;
-                } else if(bb.size < VariablesGlobales.MAX_BYTES_IN_BLOCK) {
-                    keepTransmission = false;
-                }
-
-            }
+        // Llegamos a este punto cuando no quedan bloques por enviar, liberamos recursos
 
 
-            // Si se activa intentarRemoto es porque ha fallado al enviar el ultimo bloque,
-            // por tanto no leemos e intentamos reenviar ese bloque fallido, que todavia lo
-            // tenemos en memoria
-
-            try {
-
-                la.escribirBloqueBytes(bb);
-
-                // Si se ejecuta este bloque es porque escribirBloque no ha fallado,
-                // dejamos de reintentarlo
-                leerBytes = true;
-                ultimo_recibido++;
-                // System.out.println(bb.toString());
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println("Reintentando escribir file="+id_file+" bloque="+(ultimo_recibido+1));
-                leerBytes = false;
-                // Queremos que salte la lectura para que intente escribir el ultimo bloque, que
-                // todavia tenemos en memoria
-            }
-
-        }
-
-
-        
         try {
-            la.cerrarArchivo();
+            lectorArchivos.cerrarArchivo();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Archivo file="+id_file+" descargado");
+
+        System.out.println("Archivo file="+ fileId +" descargado");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//        lectorArchivos.id_file = fileId;
+//        boolean keep = true;
+//        BloqueBytes bb = null;
+//        boolean saltarLectura = false;
+//        boolean reintentarLocal = false;
+//
+//        boolean reintentarLectura = true;
+//        while(reintentarLectura) {
+//            try {
+//                bb = lectorArchivos.leerBloqueBytes(posicionActual);
+//
+//                // Llegamos unicamente a este putno si leerBloqueBytes tiene exito
+//                reintentarLectura = false;
+//            } catch (IOException e) {
+//                System.out.println("reintentando leer file="+ fileId +" bloque="+(ultimo_enviado+1));
+//                e.printStackTrace();
+//            }
+//        }
+//
+//
+//
+//        while(keep) {
+//            // Si se activa intentarRemoto es porque ha fallado al enviar el ultimo bloque,
+//            // por tanto no leemos e intentamos reenviar ese bloque fallido, que todavia lo
+//            // tenemos en memoria
+//            if (!saltarLectura) {
+//                try {
+//                    if(!reintentarLocal) {
+//                        bb = lectorArchivos.leerBloqueBytes(posicionActual);
+//                    }
+//
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    System.out.println("reintentando leer file="+ fileId +" bloque="+(ultimo_enviado+1));
+//                    reintentarLocal = true;
+//                }
+//
+//                // Comprobamos si bloque es null o su tamaño es 0, esto indica que hemos acabado
+//                // de leer el archivo, salimos
+//                if (bb == null || bb.size == 0) {
+//                    keep = false;
+//                    continue;
+//                }
+//
+//            }
+//
+//
+//
+//
+//            try {
+//                server.escribirBloqueBytes(fileId, bb);
+//
+//                // Si se ejecuta este bloque es porque escribirBloqueBytes no ha fallado,
+//                // dejamos de reintentarlo
+//                saltarLectura = false;
+//                posicionActual += bb.size;
+//                ultimo_enviado++;
+//                // System.out.println(bb.toString());
+//
+//
+//            } catch (RemoteException e) {
+//                e.printStackTrace();
+//                saltarLectura = true;
+//                // Queremos que salte la lectura para que intente reenvia el ultimo bloque que
+//                // todavia tenemos en memoria
+//            }
+//
+//
+//        }
+//
+//
+//
+//        try {
+//            server.cerrarArchivo(fileId, tu);
+//        } catch (RemoteException e) {
+//            e.printStackTrace();
+//        }
+//
+//        try {
+//            lectorArchivos.cerrarArchivo();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        System.out.println("Archivo file="+ fileId +" cargado");
 
 
 

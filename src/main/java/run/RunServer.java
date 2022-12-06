@@ -73,6 +73,7 @@ public class RunServer {
 
 
         SyncAppServer sap = new SyncAppServer();
+        System.out.println(ip+":"+puerto);
         Naming.rebind("rmi://"+ip+":"+puerto+"/SyncApp", sap);
         System.out.println("ready to operate");
 

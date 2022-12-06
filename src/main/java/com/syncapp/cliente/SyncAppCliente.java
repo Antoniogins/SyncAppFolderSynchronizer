@@ -73,12 +73,23 @@ public class SyncAppCliente {
         fixedSubRutines = Executors.newFixedThreadPool(2);
 
         System.out.println("estableciendo parametros");
-        serverIP = args[ARG_IP];
-        puerto = Integer.parseInt(args[ARG_PUERTO]);
-        user = new TokenUsuario(args[ARG_USUARIO]);
+        setServerIP(args[ARG_IP]);
+        System.out.println("direccion ip="+serverIP);
+
+        setPuerto(args[ARG_PUERTO]);
+        System.out.println("puerto="+puerto);
+
+        setUser(new TokenUsuario((args[ARG_USUARIO])));
+        System.out.println("usuario="+user.name);
+
         setWorkingPath(args[ARG_CARPETA]);
+        System.out.println("working path="+workingPath.toString());
+
+        setHilos(args[ARG_HILOS]);
+        System.out.println("hilos="+hilos);
+
         exec = Executors.newFixedThreadPool(  Integer.parseInt(args[ARG_HILOS])  );
-        hilos = Integer.parseInt(args[ARG_HILOS]);
+
 
 
     }
@@ -125,15 +136,9 @@ public class SyncAppCliente {
     //SETTERS
     
     public void setServerIP(String serverIP) {
-        if(serverIP == null || serverIP.split(".").length != 4) return;
-        for (int i=0 ; i < 4 ; i++) {
-            int val = Integer.parseInt(serverIP.split(".")[i]);
-            if( val < 1 || val > 255) return;
-        }
+        if(serverIP == null || serverIP.length() < 7 || serverIP.length() > 15) return;
         this.serverIP = new String(serverIP);
-        //cuando hacemos ip.spit(".") separamos el texto ip en subtextos, buscando "." dentro del texto para separar
-        //si tras separar, el array resultante no es 4 significa que no es una ip
-        // "192.168.0.1" -> {"192" , "168" , "0" , "1"} , cualquier otra tamaño de array no representa una ip
+
 
     }
 
@@ -161,14 +166,17 @@ public class SyncAppCliente {
     }
 
 
-    public void setPuerto(short puerto) {
-        if(puerto < 1000) return; //short va de 0 a 65535 (justo la cantidad de puertos que existen)
-        this.puerto = puerto;
+    public void setPuerto(String puerto) {
+        this.puerto = Short.parseShort(puerto);
     }
 
     public void setTimeOffset(long offset) {
         if(offset < 0 ) return;
         timeOffset = offset;
+    }
+
+    public void setHilos(String source) {
+        hilos = Integer.parseInt(source);
     }
 
 
@@ -193,6 +201,7 @@ public class SyncAppCliente {
 
     //Servicios de iniciacion
     public void iniciarServidor() throws MalformedURLException, RemoteException, NotBoundException {
+        System.out.println("intentando conectar a rmi://"+serverIP+":"+puerto+"/SyncApp");
         remoteServer = (SyncApp) Naming.lookup("rmi://"+serverIP+":"+puerto+"/SyncApp");
     }
     
@@ -322,7 +331,7 @@ public class SyncAppCliente {
                 exec.execute(new Upload(remoteServer, a, workingPath.toString(), user));
             }
             case VariablesGlobales.DOWNLOAD -> {
-                exec.execute(new Doownload(remoteServer, a, workingPath.toString(), user));
+                exec.execute(new Download(remoteServer, a, workingPath.toString(), user));
             }
             case VariablesGlobales.MORE_INFO -> {
                 returner = -1;

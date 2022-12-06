@@ -588,12 +588,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
 
 
-    public static void main(String[] args) throws RemoteException, MalformedURLException {
-        SyncAppServer sap = new SyncAppServer();
-        Naming.rebind("rmi://localhost:1099/SyncApp", sap);
-        System.out.println("ready to operate");
-        
-    }
+
 
 
 

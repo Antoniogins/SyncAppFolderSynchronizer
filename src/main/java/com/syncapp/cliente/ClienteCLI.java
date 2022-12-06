@@ -30,8 +30,9 @@ public class ClienteCLI {
     public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {
         System.out.println("Args iniciales:");
         for (String ar : args) {
-            System.out.println(ar);
+            System.out.print(ar+", ");
         }
+        System.out.println();
         if(args == null || args.length != 5) return;
         
         if(lastParams == null) {
@@ -46,13 +47,16 @@ public class ClienteCLI {
 
         // Iniciamos el servidor
         cliente.iniciarServidor();
+        System.out.println("servidor esta vivo");
 
         // Ejecutamos Algoritmo de Cristian para obtener nuestro offset con el
         // servidor (10 intentos deberia ser suficiente)
         cliente.calcularOffset(10);
+        System.out.println("offset calculado");
 
         // Nos anunciamos en el servidor
         cliente.iniciarSesion();
+        System.out.println("sesion iniciada");
 
 
 
@@ -158,7 +162,7 @@ public class ClienteCLI {
                     }
                     case "ip" -> {
                         cliente.setServerIP(sentencia[1]);
-                        cliente.setPuerto(Short.parseShort(sentencia[2]));
+                        cliente.setPuerto(sentencia[2]);
                         lastParams[SyncAppCliente.ARG_IP] = sentencia[1];
                         lastParams[SyncAppCliente.ARG_PUERTO] = sentencia[2];
                     }
