@@ -19,6 +19,9 @@ import com.syncapp.server.SyncAppServer;
  * <p>
  *     Esta clase define el servicio distribuido SyncApp, sus funciones y su comportamiento.
  * </p>
+ * <p>
+ *     Para conocer en detalle como se implementan los diferentes metodos, a nivel codigo, revise {@link SyncAppServer}.
+ * </p>
  * <br>
  * <p>
  *     El objetivo del servicio distribuido SyncApp es "sincronizar" una carpeta que indique un {@link com.syncapp.cliente.SyncAppCliente Cliente},
@@ -29,7 +32,7 @@ import com.syncapp.server.SyncAppServer;
  *             {@link #listaArchivos(TokenUsuario) carpeta dentro del servidor} y su {@link com.syncapp.utility.Utilidades#listFiles(Path) carpeta a sincronizar}.
  *         </li>
  *         <li>
- *             {@link com.syncapp.utility.Utilidades#operacionesIniciales(ArrayList, ArrayList, Path) Comprobar} que
+ *             {@link com.syncapp.utility.Utilidades#compararListas(ArrayList, ArrayList, long, boolean)}  Comprobar} que
  *             archivos faltan en el servidor o en su pc. Esto devolvera una {@link ArrayList<Archivo> lista} de {@link Archivo Archivos}
  *             con aquellos archivos que necesitan mas informacion ({@link String hash}, {@link Long ultima hora modificacion}) para determinar si cargalos o descargarlos.
  *         </li>
@@ -50,12 +53,13 @@ import com.syncapp.server.SyncAppServer;
  *     subirlo/bajarlo:
  *     <ol>
  *         <li>
- *             {@link #abrirArchivo(TokenUsuario, Archivo, String) Preparar} el archivo en el servidor para ser leido/escrito . Esto devuelve
- *             un {@link Integer identificador unico} para este archivo, con el que posteriormente podra obtener un {@link BloqueBytes} del archivo.
- *             Si el archivo ha sido abierto por otro usuario, el metodo devuelve -1.
- *         </li>
+ *             {@link #abrirArchivo(TokenUsuario, Archivo, String) Preparar} devuelve el identificador unico del archivo
+ *             y, si la operacion indicada es "rw", se prepara el archivo para la escritura. Esto es importante, pues
+ *             multiples sesiones pueden leer el mismo archivo simultaneamente, pero unicamente uno puede escribir en el.
+ *             <br>
+ *             Si se quiere abrir el archivo en modo "rw", pero esta siendo usado, se devuelve -1.
  *         <li>
- *             {@link #leerBloqueBytes Obtener}/{@link #escribirBloqueBytes(int, BloqueBytes, int) escribir} el siguiente {@link BloqueBytes}
+ *             {@link #leerBloqueBytes Obtener}/{@link #escribirBloqueBytes(int, BloqueBytes) escribir} el siguiente {@link BloqueBytes}
  *             correspondiente hasta que no queden bloques por obtener/escribir. Cuando obtenemos bloques, si no quedan bloques por leer, se devuelve -1.
  *         </li>
  *         <li>
@@ -80,6 +84,9 @@ import com.syncapp.server.SyncAppServer;
  *             Ya esta listo para ejecutar alguna de las funciones ofrecidas.
  *         </li>
  *     </ol>
+ * </p>
+ * <p>
+ *     Para conocer en detalle como se implementan los diferentes metodos, revise {@link SyncAppServer}.
  * </p>
  */
 
@@ -249,25 +256,16 @@ public interface SyncApp extends Remote {
 
     /**
      * Permite leer un {@link BloqueBytes} para un archivo especificado con su identificador unico.
-     * Dado que pueden ocurrir errores en la transimision de un bloque, se permite indicar la posicion
+     * Dado que pueden ocurrir errores en la transimision de un bloque, se debe indicar la posicion
      * (offset de bytes) a partir de la cual leer el bloque.
      * <br>
-     * Para ello, cuando se indica posicion -1 se lee el siguiente bloque a partir de la posicion que le corresponde
-     * , y cuando posicion >=0 se lee el archivo a partir de esa posicion.
-     * <br><br>
+     * Para ello, el que invoque el metodo debera tener un control sobre estas posiciones.
+     * <br>
      * Los bloques se leen a traves de un {@link com.syncapp.utility.LectorArchivos}, que nos permite
      * realizar esta lectura con offset, etc.
      *
      * @param id_file identificador unico del archivo.
-     * @param position posicion a partir de la cual se lee el archivo:
-     *                 <ul>
-     *                 <li>
-     *                 position = -1  se lee de forma normal.
-     *                 </li>
-     *                 <li>
-     *                 position >=0  se lee a partir de la posicion indicada.
-     *                 </li>
-     *                 </ul>
+     * @param position posicion a partir de la cual se lee el archivo.
      * @return {@link BloqueBytes} a transimitir.
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
@@ -275,30 +273,19 @@ public interface SyncApp extends Remote {
 
     /**
      * Permite escribir un {@link BloqueBytes} para un archivo especificado con su identificador unico.
-     * Dado que pueden ocurrir errores en la transimision de un bloque, se permite indicar la posicion
+     * Dado que pueden ocurrir errores en la transimision de un bloque, se debe indicar la posicion
      * (offset de bytes) a partir de la cual escribir el bloque.
      * <br>
-     * Para ello, cuando se indica posicion -1 se escribe el siguiente bloque a partir de la posicion que le corresponde
-     * , y cuando posicion >=0 se escribe el archivo a partir de esa posicion.
-     * <br><br>
+     * El bloque a escribir, debe contener la posicion en la que se va a escribir el bloque ({@link BloqueBytes#position}).
+     * <br>
      * Los bloques se escriben a traves de un {@link com.syncapp.utility.LectorArchivos}, que nos permite
      * realizar esta escritura con offset, etc.
-     *
      * @param id_file identificador unico del archivo.
-     * @param bloq_bytes {@link BloqueBytes} a transimitir.
-     * @param pos posicion a partir de la cual se escribe el archivo:
-     *                   <ul>
-     *                   <li>
-     *                   position = -1  se escribe de forma normal.
-     *                   </li>
-     *                   <li>
-     *                   position >=0  se escribe a partir de la posicion indicada.
-     *                   </li>
-     *                   </ul>
+     * @param bloq_bytes {@link BloqueBytes} a escribir.
      *
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
-    void escribirBloqueBytes(int id_file, BloqueBytes bloq_bytes, int pos) throws RemoteException;
+    void escribirBloqueBytes(int id_file, BloqueBytes bloq_bytes) throws RemoteException;
 
 
 

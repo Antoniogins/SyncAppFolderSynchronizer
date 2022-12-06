@@ -1,18 +1,18 @@
 package com.syncapp.cliente;
 
+import com.syncapp.interfaces.SyncApp;
+import com.syncapp.model.Archivo;
+import com.syncapp.model.BloqueBytes;
+import com.syncapp.model.TokenUsuario;
+import com.syncapp.utility.LectorArchivos;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 
-import com.syncapp.interfaces.SyncApp;
-import com.syncapp.model.BloqueBytes;
-import com.syncapp.model.Archivo;
-import com.syncapp.model.TokenUsuario;
-import com.syncapp.utility.LectorArchivos;
+public class Doownload implements Runnable{
 
-public class Upload implements Runnable{
-    
     SyncApp server;
     int fileId;
     Archivo ruta;
@@ -22,19 +22,18 @@ public class Upload implements Runnable{
 //    int ultimo_enviado;
     long posicionActual;
 
-    public Upload(SyncApp server, Archivo ruta, String pathlocal, TokenUsuario usuario) throws IOException {
+    public Doownload(SyncApp server, Archivo ruta, String pathlocal, TokenUsuario usuario) throws IOException {
         this.server = server;
         this.usuario = usuario;
 
         Path path = Paths.get(ruta.ruta);
         Path wfold = Paths.get(pathlocal);
         this.ruta = new Archivo( path , wfold);
-        this.ruta.sizeInBytes = ruta.sizeInBytes;
         this.abs = wfold.resolve(path);
 
 
 
-        this.lectorArchivos = new LectorArchivos(abs, "r", 999);
+        this.lectorArchivos = new LectorArchivos(abs, "rw", 999);
 //        ultimo_enviado = -1; //Todavia no se ha enviado ninguno
         posicionActual = 0;
     }
@@ -48,11 +47,11 @@ public class Upload implements Runnable{
         boolean reintentarLectura = true;
         while(reintentarLectura) {
             try {
-                bloque = lectorArchivos.leerBloqueBytes(posicionActual);
+                bloque = server.leerBloqueBytes(fileId, posicionActual);
 
                 // Llegamos unicamente a este putno si leerBloqueBytes tiene exito
                 reintentarLectura = false;
-            } catch (IOException e) {
+            } catch (RemoteException e) {
                 System.out.println("reintentando leer file="+ fileId +" pos="+posicionActual);
                 e.printStackTrace();
             }
@@ -66,15 +65,14 @@ public class Upload implements Runnable{
         boolean reintentarEnvio = true;
         while (reintentarEnvio) {
             try {
-                server.escribirBloqueBytes(fileId, bloque);
-                System.out.println("enviando bloque "+bloque);
+                lectorArchivos.escribirBloqueBytes(bloque);
 
                 // Si llegamos a este punto, es que escribir el bloque en el servidor ha tenido exito
                 reintentarEnvio = false;
                 posicionActual += bloque.size;
 
 
-            } catch (RemoteException e) {
+            } catch (IOException e) {
                 System.out.println("reintentando leer file=\""+ fileId +"\" pos=\""+posicionActual);
             }
         }
@@ -93,12 +91,12 @@ public class Upload implements Runnable{
 
     public void run() {
         try {
-            fileId = server.abrirArchivo(usuario, ruta, "rw");
+            fileId = server.abrirArchivo(usuario, ruta, "r");
         } catch (RemoteException e1) {
             e1.printStackTrace();
             return;
         }
-        System.out.println("subiendo file="+ fileId +" "+ruta);
+        System.out.println("bajando file="+ fileId +" ruta="+ruta.toString());
 
         lectorArchivos.setFileId(fileId);
         ruta.remoteID = ""+fileId;
@@ -112,11 +110,6 @@ public class Upload implements Runnable{
 
         // Llegamos a este punto cuando no quedan bloques por enviar, liberamos recursos
 
-        try {
-            server.cerrarArchivo(fileId, usuario);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
 
         try {
             lectorArchivos.cerrarArchivo();
@@ -124,7 +117,7 @@ public class Upload implements Runnable{
             e.printStackTrace();
         }
 
-        System.out.println("Archivo file="+ fileId +" cargado");
+        System.out.println("Archivo file="+ fileId +" descargado");
 
 
 

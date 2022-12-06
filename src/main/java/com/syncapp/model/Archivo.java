@@ -1,5 +1,7 @@
 package com.syncapp.model;
 
+import com.syncapp.utility.VariablesGlobales;
+
 import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Path;
@@ -39,11 +41,20 @@ public class Archivo implements Serializable {
 
     @Override
     public String toString() {
-        String toRet = "[\"";
-        toRet = toRet.concat(ruta+"],");
+        String toRet = "["+ VariablesGlobales.COLOR_CYAN;
+        toRet = toRet.concat(ruta+VariablesGlobales.COLOR_WHITE+",");
         toRet = toRet.concat(  (hash == null)? "no_hash," : (hash+",") );
-        toRet = toRet.concat(  (timeMilisLastModified < 0)? "no_time" : (""+timeMilisLastModified)  );
-        return toRet+"]";
+        toRet = toRet.concat(  (timeMilisLastModified < 0)? "no_time," : (""+timeMilisLastModified)  );
+
+        float kb = (float) sizeInBytes/1000; //Para saber cuantos kB
+        float mb = kb/1000;
+        float gb = mb/1000;
+
+        String sizeText = (gb<1) ? ( (mb<1) ? ( (kb<1) ? (sizeInBytes+"B") : kb+"KB" )  : (mb+"MB")) : (gb+"GB")  ;
+
+
+
+        return toRet+sizeText+"]";
     }
 
     public Path toPath() {

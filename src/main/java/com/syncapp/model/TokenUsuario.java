@@ -1,5 +1,7 @@
 package com.syncapp.model;
 
+import com.syncapp.utility.VariablesGlobales;
+
 import java.io.Serializable;
 
 // import org.json.JSONObject;
@@ -15,6 +17,6 @@ public class TokenUsuario implements Serializable{
 
     @Override
     public String toString() {
-        return "["+name+"#"+session_id+"]";
+        return VariablesGlobales.COLOR_GREEN +"["+name+"#"+session_id+"]"+VariablesGlobales.COLOR_WHITE;
     }
 }

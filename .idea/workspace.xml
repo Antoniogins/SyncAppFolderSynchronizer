@@ -5,22 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="50e8eb93-129d-4855-bc1d-8f11155dc7ff" name="Changes" comment="simple test commit">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Doownload.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Download.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Download.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ServicioMonitorizacion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/ServicioMonitorizacion.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/SyncAppCliente.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/SyncAppCliente.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/PantallaPrincipal.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/CampoDeTextoYDialogo.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/MenusYBotones.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/MenusYBotonesConManejadores.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/PanelConCuadriculaYTeclado.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/PanelConCuadriculaYTimer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/PanelConImagen.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/PanelConImagenYScroll.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/PanelConScrollYEventosDeRaton.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/PanelesYLayouts.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/guis/justExamples/UnaVentana.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Upload.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/cliente/Upload.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/interfaces/SyncApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/interfaces/SyncApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/model/Archivo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/model/Archivo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/model/BloqueBytes.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/model/BloqueBytes.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/model/LocalRemote.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/model/LocalRemote.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/model/TokenUsuario.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/model/TokenUsuario.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/server/FileHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/server/FileHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/server/SyncAppServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/server/SyncAppServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/server/UserHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/server/UserHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/LectorArchivos.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/LectorArchivos.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Utilidades.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/Utilidades.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/VariablesGlobales.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/syncapp/utility/VariablesGlobales.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,10 +86,29 @@
     &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;
   }
 }</component>
-  <component name="RunManager">
+  <component name="RecentsManager">
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.syncapp.cliente" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.ServerStarter">
+    <configuration name="ClientStarter" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="run.RunClient" />
+      <module name="syncapp" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ServerStarter" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="run.RunServer" />
+      <module name="syncapp" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="JetRunConfigurationType">
       <module name="syncapp_client" />
       <method v="2">
@@ -103,6 +122,10 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Application.ServerStarter" />
+      <item itemvalue="Application.ClientStarter" />
+    </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
@@ -155,6 +178,10 @@
     <MESSAGE value="simple test commit" />
     <option name="LAST_COMMIT_MESSAGE" value="simple test commit" />
     <option name="MAKE_NEW_CHANGELIST_ACTIVE" value="true" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/syncapp_client$ClienteCLI.ic" NAME="ClienteCLI Coverage Results" MODIFIED="1669984610676" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">

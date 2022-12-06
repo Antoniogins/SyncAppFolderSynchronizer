@@ -67,7 +67,7 @@ public class ServicioMonitorizacion implements Runnable {
                             StandardWatchEventKinds.ENTRY_MODIFY);
 
                     pathsRegistrados.put(wk, pathAbsoluto);
-                    System.out.println("registrado [READ , MODIFY] \"" + pathAbsoluto.toString() + "\"");
+                    System.out.println("registrado "+VariablesGlobales.COLOR_YELLOW+"[READ,MODIFY]"+VariablesGlobales.COLOR_WHITE+" \"" + pathAbsoluto.toString() + "\"");
 
 
                 } catch (IOException e) {
@@ -107,13 +107,13 @@ public class ServicioMonitorizacion implements Runnable {
 
 
             Path carpetaPadre = pathsRegistrados.get(key);
-            System.out.println("carpeta padre=\""+carpetaPadre.toString()+"\"");
+//            System.out.println("carpeta padre=\""+carpetaPadre.toString()+"\"");
             Path archivo = carpetaPadre.resolve(observables.context());
-            System.out.println("ruta del archivo modificado=\""+archivo.toString());
+//            System.out.println("ruta del archivo modificado=\""+archivo.toString());
 
 
 
-            System.out.println("evento " + tipoEvento + " \"" + archivo.toString() + "\"");
+            System.out.println("evento "+VariablesGlobales.COLOR_YELLOW+tipoEvento+VariablesGlobales.COLOR_WHITE+" "+archivo);
 
 
 
@@ -148,7 +148,7 @@ public class ServicioMonitorizacion implements Runnable {
             try {
 
                 if (tipoEvento.equals(ENTRY_CREATE)  || tipoEvento.equals(ENTRY_MODIFY)) {
-                    System.out.println("llegamos a test, con archivo=\"" + archivo + "\"");
+//                    System.out.println("llegamos a test, con archivo=\"" + archivo + "\"");
 
 
                     // Actualizamos la ultima vez que ha cambiado el archivo observado

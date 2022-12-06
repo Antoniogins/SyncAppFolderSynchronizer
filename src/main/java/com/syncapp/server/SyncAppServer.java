@@ -9,7 +9,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Logger;
 
 import com.syncapp.cliente.SyncAppCliente;
@@ -60,13 +59,15 @@ import com.syncapp.utility.Utilidades;
  *     subirlo/bajarlo:
  *     <ol>
  *         <li>
- *             {@link #abrirArchivo(TokenUsuario, Archivo, String) Preparar} el archivo en el servidor para ser leido/escrito . Esto devuelve
- *             un {@link Integer identificador unico} para este archivo, con el que posteriormente podra obtener un {@link BloqueBytes} del archivo.
- *             Si el archivo ha sido abierto por otro usuario, el metodo devuelve -1.
- *         </li>
+ *             {@link #abrirArchivo(TokenUsuario, Archivo, String) Preparar} devuelve el identificador unico del archivo
+ *             y, si la operacion indicada es "rw", se prepara el archivo para la escritura. Esto es importante, pues
+ *             multiples sesiones pueden leer el mismo archivo simultaneamente, pero unicamente uno puede escribir en el.
+ *             <br>
+ *             Si se quiere abrir el archivo en modo "rw", pero esta siendo usado, se devuelve -1.
  *         <li>
- *             {@link #leerBloqueBytes Obtener}/{@link #escribirBloqueBytes(int, BloqueBytes, int) escribir} el siguiente {@link BloqueBytes}
- *             correspondiente hasta que no queden bloques por obtener/escribir. Cuando obtenemos bloques, si no quedan bloques por leer, se devuelve -1.
+ *         <li>
+ *             {@link #leerBloqueBytes Obtener}/{@link #escribirBloqueBytes(int, BloqueBytes) escribir} el siguiente {@link BloqueBytes}
+ *             correspondiente hasta que no queden bloques por obtener/escribir. Cuando obtenemos bloques, si no quedan bloques por leer, se devuelve null.
  *         </li>
  *         <li>
  *             {@link #cerrarArchivo(int, TokenUsuario) Cerrar} el archivo, liberando recursos, y permitiendo que otros usuarios puedan acceder al arachivo.
@@ -108,8 +109,18 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      */
     Logger logger;
 
+    /**
+     * Este objeto nos permite manejar que archivos estan siendo abierto (en escritura), y manjera los recursos sobre
+     * estos archivos (sus {@link LectorArchivos}).
+     */
     FileHandler fileHandler;
 
+    /**
+     * Este objeto nos permite tener un control sobre las sesiones de los usuarios, facilitando la tarea de iniciar sesiones,
+     * cerrar sesiones etc.
+     * <br>
+     * Ademas mantiene un control sobre los archivos abiertos por una sesion (abiertos en modo escritura).
+     */
     UserHandler userHandler;
     
 
@@ -133,7 +144,6 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
         // Inicializamos el registro de usuarios
         userHandler = new UserHandler();
-
 
         // Inicializamos el Logger
         logger = Logger.getLogger("Logger");
@@ -161,7 +171,6 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      * @param usuario {@link TokenUsuario} que quiere iniciar sesion.
      * @return id {@link String id de sesion} asignado al usuario. Si el usuario ofrecido al metodo es nulo o no contiene nombre, se devuelve null, indicando
      * asi que hay fallos.
-     *
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     @Override
@@ -180,13 +189,16 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
 
     /**
-     * Este metodo permite inicializar la lectura/escritura de un archivo, reservando los recursos para el mismo.
+     * Este metodo permite obtener el {@link Integer identificador unico} del archivo. Si el archivo se quiere
+     * abrir en modo escritura, se comprueba que ningun usuario lo tenga abierto para escritura.
+     * <br>
+     * {@link SyncApp#abrirArchivo(TokenUsuario, Archivo, String)} para mas informacion.
      * <br>
      * El metodo comprueba las siguientes situaciones
      * <ul>
      *     <li>
      *         Alguno de los parametros dados no sea nulo.
-     *     </li> userFromSessionId.get(sessionId).name
+     *     </li>
      *     <li>
      *         La operacion indicada sea "r" o "rw".
      *     </li>
@@ -218,26 +230,13 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         // Obtenemos el path absoluto dentro del archivo, dentro del servidor
         Path filepath = usersContainers.resolve(usuario.name).resolve(archivo.ruta);
 
-        // Comprobamos si el archivo ya esta siendo escrito
-        if(fileHandler.isFileOpened(filepath.toString())) {
-            return -1; // Dos sesiones no pueden escribir el mismo archivo simultaneamente
-        }
+
 
         // Loggeamos la apertura del archivo
         logger.info("abriendo archivo " + archivo + " modo " + op_mode);
 
-
-        if(op_mode.equals("rw")) {
-            int fileId = fileHandler.newFile(filepath.toString());
-            try {
-                fileHandler.openFile(filepath.toString());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return fileId;
-        } else {
-            return fileHandler.getFileId(filepath.toString());
-        }
+        // Devolvemos el fileId. FileHandler comprobara si el archivo se puede abrir o no, devolviendo -1 en caso engativo.
+        return fileHandler.openFile(filepath.toString(), op_mode);
 
     }
 
@@ -324,7 +323,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
 
 
-    // Metodos para obtener informacion
+    // Metodos para obtener datos
 
     /**
      * Devuelve un {@link ArrayList} de {@link Archivo}, que representa la lista de archivos que un {@link TokenUsuario usuario}
@@ -402,40 +401,30 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
     /**
      * Permite leer un {@link BloqueBytes} para un archivo especificado con su identificador unico.
-     * Dado que pueden ocurrir errores en la transimision de un bloque, se permite indicar la posicion
+     * Dado que pueden ocurrir errores en la transimision de un bloque, se debe indicar la posicion
      * (offset de bytes) a partir de la cual leer el bloque.
      * <br>
-     * Para ello, cuando se indica posicion -1 se lee el siguiente bloque a partir de la posicion que le corresponde
-     * , y cuando posicion >=0 se lee el archivo a partir de esa posicion.
-     * <br><br>
      * Los bloques se leen a traves de un {@link com.syncapp.utility.LectorArchivos}, que nos permite
      * realizar esta lectura con offset, etc.
+     * <br>
+     * Para cada peticion, se abre y se cierra un nuevo {@link LectorArchivos} nuevo, para leer el bloque
+     * de bytes.
      *
      * @param fileId identificador unico del archivo.
-     * @param position posicion a partir de la cual se lee el archivo:
-     *                 <ul>
-     *                 <li>
-     *                 position = -1  se lee de forma normal.
-     *                 </li>
-     *                 <li>
-     *                 position >=0  se lee a partir de la posicion indicada.
-     *                 </li>
-     *                 </ul>
+     * @param posicion posicion a partir de la cual se lee el archivo:
      * @return {@link BloqueBytes} a transimitir.
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     @Override
-    public BloqueBytes leerBloqueBytes(int fileId, long position) throws RemoteException {
+    public BloqueBytes leerBloqueBytes(int fileId, long posicion) throws RemoteException {
 
 
         LectorArchivos archivoActual = null;
         BloqueBytes bb = null;
 
         try {
+            // Creamos un nuevo Lector para poder leer los bytes
             archivoActual = new LectorArchivos(fileHandler.getFilePath(fileId), "r" , fileId);
-            logger.info("obteniendo bloque del archivo "+fileId);
-            bb = archivoActual.leerBloqueBytesEnPosicion(position);
-            archivoActual.cerrarArchivo();
 
         } catch (IOException e) {
             logger.severe("error al leer el bloque "+" position del archivo "+fileId);
@@ -443,45 +432,52 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
             throw new RemoteException("Error al leer un bloque de bytes");
         }
 
-        return bb;
 
-        
+        try {
+            // Obtenemos el bloque de bytes
+            bb = archivoActual.leerBloqueBytes(posicion);
+            logger.info("leyendo bloque "+bb+" del archivo "+fileId);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            // Intentamos cerrar ese Lector de archivos
+            archivoActual.cerrarArchivo();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Devolvemos el bloque leido
+        return bb;
     }
 
 
     /**
      * Permite escribir un {@link BloqueBytes} para un archivo especificado con su identificador unico.
-     * Dado que pueden ocurrir errores en la transimision de un bloque, se permite indicar la posicion
+     * Dado que pueden ocurrir errores en la transimision de un bloque, se debe indicar la posicion
      * (offset de bytes) a partir de la cual escribir el bloque.
      * <br>
-     * Para ello, cuando se indica posicion -1 se escribe el siguiente bloque a partir de la posicion que le corresponde
-     * , y cuando posicion >=0 se escribe el archivo a partir de esa posicion.
-     * <br><br>
      * Los bloques se escriben a traves de un {@link com.syncapp.utility.LectorArchivos}, que nos permite
      * realizar esta escritura con offset, etc.
      *
      * @param fileId identificador unico del archivo.
      * @param bloq_bytes {@link BloqueBytes} a transimitir.
-     * @param pos posicion a partir de la cual se escribe el archivo:
-     *                   <ul>
-     *                   <li>
-     *                   position = -1  se escribe de forma normal.
-     *                   </li>
-     *                   <li>
-     *                   position >=0  se escribe a partir de la posicion indicada.
-     *                   </li>
-     *                   </ul>
      *
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     @Override
-    public void escribirBloqueBytes(int fileId, BloqueBytes bloq_bytes, int pos) throws RemoteException {
+    public void escribirBloqueBytes(int fileId, BloqueBytes bloq_bytes) throws RemoteException {
         if(bloq_bytes == null || bloq_bytes.size < 1 || fileId < 0) return;
 
+        // Obtenemos el lector de archivos que se creo al abrir el archivo (debido a que es escritura)
         LectorArchivos actual = fileHandler.getWriter(fileId);
         try {
+            // Escribimos el bloque de bytes en el archivo
             logger.info("escribiendo el bloque "+bloq_bytes);
-            actual.escribirBloqueBytesEnPosicion(bloq_bytes, pos);
+            actual.escribirBloqueBytes(bloq_bytes);
+
         } catch(IOException ioe) {
             logger.severe("error al escribir el bloque "+bloq_bytes);
             ioe.printStackTrace();

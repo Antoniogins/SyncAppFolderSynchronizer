@@ -1,16 +1,30 @@
 package com.syncapp.server;
 
 import com.syncapp.model.TokenUsuario;
-
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+
+/**
+ * Esta clase nos permite controlar los usuarios que han iniciado sesion, los archivos que han abierto, etc.
+ */
 public class UserHandler {
 
 
+    /**
+     * Almacena un {@link TokenUsuario} para un {@link String sessionId}.
+     */
     HashMap< String, TokenUsuario> userFromSessionId;
+
+    /**
+     * Almacena un {@link String sessionId} para un {@link String nombre de usuario}.
+     */
     HashMap< String, String> sessionIdFromUsername;
+
+    /**
+     * Almacena todos los {@link String idSesiones} que se han usado, para no asignar dos mismos id a diferentes
+     * usuarios, ya que los id son aleatorios.
+     */
     ArrayList<String> memoriaDeSesiones;
 
     HashMap< String, String > archivosActivosEnSesion; //fileid - usuario

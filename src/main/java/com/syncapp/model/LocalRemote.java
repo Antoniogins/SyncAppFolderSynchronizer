@@ -10,6 +10,9 @@ public class LocalRemote {
 
     public long timeMilisLocal; 
     public long timeMilisRemote;
+
+    public long sizeLocal;
+    public long sizeRemote;
     
     public LocalRemote(){
         presentInLocal = false;

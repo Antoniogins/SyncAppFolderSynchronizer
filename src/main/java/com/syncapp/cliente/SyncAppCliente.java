@@ -316,13 +316,13 @@ public class SyncAppCliente {
     //devuelve >0 si la operacion ya se ha ejecutado y <0 si el archivo necesita mas informacion para decidir que ejecutar
     public int ejecutarOperacion(Archivo a, int operacion) throws IOException {
         int returner = 1;
-        System.out.println(VariablesGlobales.toString(operacion)+": "+a.ruta);
+        System.out.println(VariablesGlobales.toString(operacion)+": "+a);
         switch (operacion) {
             case VariablesGlobales.UPLOAD -> {
                 exec.execute(new Upload(remoteServer, a, workingPath.toString(), user));
             }
             case VariablesGlobales.DOWNLOAD -> {
-                exec.execute(new Download(remoteServer, a, workingPath.toString(), user));
+                exec.execute(new Doownload(remoteServer, a, workingPath.toString(), user));
             }
             case VariablesGlobales.MORE_INFO -> {
                 returner = -1;
@@ -343,18 +343,16 @@ public class SyncAppCliente {
 
         //Obtenemos listas iniciales, sin parametros
         ArrayList<Archivo> local = Utilidades.listFiles(workingPath);
-//        if (local != null) {
-//            local.sort((a, b) -> a.ruta.compareTo(b.ruta));
-//            System.out.println("tamaño lista local="+local.size()); //TESTS
-//            local.forEach(c-> System.out.println(c.ruta)); //TESTS
-//        }
+        if (local != null) {
+            System.out.println("tamaño lista local="+local.size()); //TESTS
+            local.forEach(System.out::println); //TESTS
+        }
 
         ArrayList<Archivo> remota = remoteServer.listaArchivos(user);
-//        if (remota != null) {
-//            remota.sort((a, b) -> a.ruta.compareTo(b.ruta));
-//            System.out.println("\ntamaño lista remota="+remota.size()); //TESTS
-//            remota.forEach(c-> System.out.println(c.ruta)); //TESTS
-//        }
+        if (remota != null) {
+            System.out.println("\ntamaño lista remota="+remota.size()); //TESTS
+            remota.forEach(System.out::println); //TESTS
+        }
 
         boolean hayElementosEnLocal = (local != null && local.size() >1) ;
         boolean hayElementosEnRemoto = (remota != null && remota.size() >1) ;

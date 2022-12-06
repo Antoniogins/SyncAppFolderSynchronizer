@@ -4,10 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -74,21 +71,26 @@ public class Utilidades {
 
         // Por motivos de seguridad, normalizamos el path a iterar, esto se debe a que se puede indicar un directorio
         // superior indicando "..", lo cual en un servidor puede acceder a directorios que los usuarios no deberian acceder.
-        pathToList.normalize();
+        Path real = pathToList.normalize();
 
         // Iteramos el directorio indicado
         try {
-            Files.walk(pathToList).forEach(c -> {
+            Files.walk(real).forEach(c -> {
 
                 // Dado que unicamente queremos poner al archivo la ruta respecto al path de original, lo relativizamos
-                // Por ejemplo: pathToList = /home/usuario/carpeta
-                //                       c = /home/usuario/carpeta/documentos/renta.pdf
-                //                       m = documentos/renta.pdf
-                Path m = pathToList.relativize(c);
+                // Por ejemplo: real = /home/usuario/carpeta
+                //                 c = /home/usuario/carpeta/documentos/renta.pdf
+                //                 m = documentos/renta.pdf
+                Path m = real.relativize(c);
 
                 // Si el path c corresponde a un archivo, y su tamaño es mas de 0bytes, lo añadimos a la lista de archivos
-                if (c.toFile().isFile() && c.toFile().length() > 0){
-                    lista.add(new Archivo(m , pathToList));
+                long fileSize = c.toFile().length();
+//                System.out.println(fileSize);
+                if (c.toFile().isFile() && fileSize > 0){
+//                    System.out.println("tiene mas de 0bytes asi que añado");
+                    Archivo toAdd = new Archivo(m, real);
+                    toAdd.sizeInBytes = fileSize;
+                    lista.add(toAdd);
                 }
                 
             });
@@ -576,6 +578,7 @@ public class Utilidades {
             lr.presentInLocal = true;
             lr.hashLocal = c.hash;
             lr.timeMilisLocal = c.timeMilisLastModified + offset;
+            lr.sizeLocal = c.sizeInBytes;
 
             // Para esta ruta, introducimos en el mapa su objeto LocalRemote, asi podremos compararlo posteriormente
             listaIndices.put(c.ruta, lr);
@@ -597,6 +600,7 @@ public class Utilidades {
             lr.presentInRemote = true;
             lr.hashRemoto = c.hash;
             lr.timeMilisRemote = c.timeMilisLastModified;
+            lr.sizeRemote = c.sizeInBytes;
 
             // Añadimos el LocalRemote a la lista, por si no lo contuviera
             listaIndices.put(c.ruta, lr);
@@ -612,11 +616,13 @@ public class Utilidades {
 
         // Iteramos la lista para saber que archivos hay que cargar/descargar/mas operaciones
         listaIndices.forEach( (a,b) -> {  // a=archivo (en String)  b=localRemote
+            Archivo fin = new Archivo(a);
 
             // Si el archivo tiene presencia remota, pero no local, no necesitamos comparar mas metadatos, ya que sabemos
             // que se tienen que descargar
             if(b.presentInRemote && !b.presentInLocal) {
-                operaciones.put(new Archivo(a) , VariablesGlobales.DOWNLOAD);
+                fin.sizeInBytes = b.sizeRemote;
+                operaciones.put(fin , VariablesGlobales.DOWNLOAD);
 
                 // Con return saltamos a la siguiente iteracion de foreach
                 return;
@@ -624,7 +630,8 @@ public class Utilidades {
 
             // Analogamente al caso anterior, si el archivo tiene presencia local pero no remota, directamente lo cargamos
             if(b.presentInLocal && !b.presentInRemote) {
-                operaciones.put(new Archivo(a) , VariablesGlobales.UPLOAD);
+                fin.sizeInBytes = b.sizeLocal;
+                operaciones.put(fin, VariablesGlobales.UPLOAD);
 
                 // Con return saltamos a la siguiente iteracion de foreach
                 return;
@@ -642,7 +649,8 @@ public class Utilidades {
             if(!comprobarMetadatos) {
                 // Este bloque se ejecutara cuando el archivo indicado tenga presencia local y remota, y ademas
                 // no se quiera comparar los metadatos del archivo
-                operaciones.put(new Archivo(a) , VariablesGlobales.MORE_INFO);
+                fin.sizeInBytes = local.size();
+                operaciones.put(fin, VariablesGlobales.MORE_INFO);
 
                 // Con return saltamos a la siguiente iteracion de foreach
                 return;
@@ -656,9 +664,11 @@ public class Utilidades {
 
                 // Comparamos la ultima modificacion local (con offset) vs la ultima modificacion remota.
                 if(b.timeMilisLocal < b.timeMilisRemote) {
-                    operaciones.put(new Archivo(a), VariablesGlobales.DOWNLOAD);
+                    fin.sizeInBytes = b.sizeRemote;
+                    operaciones.put(fin, VariablesGlobales.DOWNLOAD);
                 } else {
-                    operaciones.put(new Archivo(a), VariablesGlobales.UPLOAD);
+                    fin.sizeInBytes = b.sizeLocal;
+                    operaciones.put(fin, VariablesGlobales.UPLOAD);
                 }
             }
 

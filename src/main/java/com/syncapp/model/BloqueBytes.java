@@ -1,12 +1,13 @@
 package com.syncapp.model;
 
+import com.syncapp.utility.VariablesGlobales;
+
 import java.io.Serializable;
 
 public class BloqueBytes implements Serializable{
     public byte[] data;
     public int size;
     public long position;
-    public int blockID;
     public int fileID;
 
     // cuando iniciemos a contar los bloques, que comience en 0, asi cuando se
@@ -20,6 +21,6 @@ public class BloqueBytes implements Serializable{
 
         String sizeText = (mb<1) ? ( (kb<1) ? (size+"B") : kb+"KB" )  : (mb+"MB")  ;
 
-        return "[file="+ fileID +",block="+ blockID +",pos="+position+",size="+sizeText+"]";
+        return "[file="+VariablesGlobales.COLOR_MAGENTA+ fileID+ VariablesGlobales.COLOR_WHITE +",pos="+position+",size="+ VariablesGlobales.COLOR_MAGENTA+sizeText+VariablesGlobales.COLOR_WHITE+"]";
     }
 }

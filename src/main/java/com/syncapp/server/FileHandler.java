@@ -5,6 +5,7 @@ import com.syncapp.utility.LectorArchivos;
 import com.syncapp.utility.Utilidades;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -55,9 +56,25 @@ public class FileHandler {
     }
 
     public int newFile(String path) {
+        Path toWork = Paths.get(path);
+
+        if(Files.exists(toWork)) {
+
+            // Si el archivo ya existia, lo borramos y lo creamos desde cero
+            try {
+                Files.delete(toWork);
+                Files.createFile(toWork);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            return Integer.parseInt(fileIdFromPath.get(path));
+        }
+
+
         int fileId = globalFileId++;
-        pathFromFileID.put(""+fileId, path);
-        fileIdFromPath.put(path, ""+fileId);
+        pathFromFileID.put("" + fileId, path);
+        fileIdFromPath.put(path, "" + fileId);
         return fileId;
     }
 
@@ -65,12 +82,32 @@ public class FileHandler {
         return openedFiles.contains(path);
     }
 
-    public void openFile(String path) throws IOException {
-        openedFiles.add(path);
+    public int openFile(String path, String opMode) {
 
-        LectorArchivos la = new LectorArchivos(Paths.get(path), "rw", Integer.parseInt(fileIdFromPath.get(path))  );
+        // Si el archivo ya esta abierto, devolvemos -1
+        if(isFileOpened(path)) {
+            return -1;
+        }
 
-        openedFilesWriter.put(path, la);
+        int fileid = Integer.parseInt(fileIdFromPath.get(path));
+
+        if(opMode.equals("rw")) {
+            try{
+
+                LectorArchivos la = new LectorArchivos(Paths.get(path), "rw", Integer.parseInt(fileIdFromPath.get(path))  );
+
+                openedFiles.add(path);
+                openedFilesWriter.put(path, la);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
+        return fileid;
+
+
+
     }
 
 
