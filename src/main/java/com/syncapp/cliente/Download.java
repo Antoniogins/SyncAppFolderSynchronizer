@@ -26,10 +26,9 @@ public class Download implements Runnable{
         this.server = server;
         this.usuario = usuario;
 
-        Path path = Paths.get(ruta.ruta);
-        Path wfold = Paths.get(pathlocal);
-        this.ruta = new Archivo( path , wfold);
-        this.abs = wfold.resolve(path);
+        this.ruta = ruta;
+        this.ruta.workingFOlder = pathlocal;
+        this.abs = this.ruta.toPath();
 
 
 

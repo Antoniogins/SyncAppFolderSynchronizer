@@ -32,18 +32,17 @@ import com.syncapp.server.SyncAppServer;
  *             {@link #listaArchivos(TokenUsuario) carpeta dentro del servidor} y su {@link com.syncapp.utility.Utilidades#listFiles(Path) carpeta a sincronizar}.
  *         </li>
  *         <li>
- *             {@link com.syncapp.utility.Utilidades#compararListas(ArrayList, ArrayList, long, boolean)}  Comprobar} que
- *             archivos faltan en el servidor o en su pc. Esto devolvera una {@link ArrayList<Archivo> lista} de {@link Archivo Archivos}
- *             con aquellos archivos que necesitan mas informacion ({@link String hash}, {@link Long ultima hora modificacion}) para determinar si cargalos o descargarlos.
+ *             Comprobar que archivos no existen en la maquina remota o local
  *         </li>
  *         <li>
- *             {@link SyncAppCliente#sincronizarConServidor() Cargar} aquellos archivos que seguro sabemos que necesitan cargarse/descargarse.
+ *             Para esos archivos, cargalors/descargarlos sin mas comprobaciones
  *         </li>
  *         <li>
- *             Para aquellos archivos que necesitan mas informacion, {@link #obtenerMetadatos(TokenUsuario, ArrayList) obtenerla}.
- *         </li>
- *         <li>
- *             Cargar/descargar aquellos archivos que se consideren necesarios.
+ *             Para aquellos archivos que estan presentes en ambas maquinas, obtener el hash local y hash remoto, y si
+ *             los dos hashes son diferentes, el archivo ha cambiado. Para saber cual cargar/descargar, necesitamos saber
+ *             cual es el mas receiente, haciendo uso de {@link Archivo#timeMilisLastModified}.
+ *             <br>
+ *             Para el archivo mas reciente (tiene mayor milis) lo cargamos/descargamos (dependiendo de donde proceda ese archivo).
  *         </li>
  *     </ol>
  * </p>
@@ -229,6 +228,15 @@ public interface SyncApp extends Remote {
      * @throws RemoteException si ocurre un problema durante la ejecucion del metodo.
      */
     ArrayList<Archivo> obtenerMetadatos(TokenUsuario usuario, ArrayList<Archivo> lista) throws RemoteException;
+
+
+    /**
+     * Devuelve el hash de un archivo disponible en el servidor.
+     * @param acalcular {@link Archivo} al cual calcular el hash md5.
+     * @return {@link String hasmd5} del archivo especificado.
+     * @throws RemoteException si ocurre un problema durante la ejecucion el metodo.
+     */
+    String calcularHash(Archivo acalcular, TokenUsuario usuario) throws RemoteException;
 
 
 

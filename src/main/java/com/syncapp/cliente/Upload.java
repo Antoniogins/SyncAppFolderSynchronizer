@@ -26,16 +26,13 @@ public class Upload implements Runnable{
         this.server = server;
         this.usuario = usuario;
 
-        Path path = Paths.get(ruta.ruta);
-        Path wfold = Paths.get(pathlocal);
-        this.ruta = new Archivo( path , wfold);
-        this.ruta.sizeInBytes = ruta.sizeInBytes;
-        this.abs = wfold.resolve(path);
+        this.ruta = ruta;
+        this.ruta.workingFOlder = pathlocal;
+        abs = this.ruta.toPath();
 
 
 
-        this.lectorArchivos = new LectorArchivos(abs, "r", 999);
-//        ultimo_enviado = -1; //Todavia no se ha enviado ninguno
+        this.lectorArchivos = new LectorArchivos(abs, "r", 999); // el id lo cambiaremos en cuanto dispongamos
         posicionActual = 0;
     }
 

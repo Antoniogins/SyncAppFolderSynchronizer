@@ -528,6 +528,7 @@ public class Utilidades {
      *     </li>
      * </ol>
      * <br>
+     * @deprecated - actualmente se implementa en cliente.
      * @param local {@link ArrayList}<{@link Archivo}> que se encuentran en la carpeta local del usuario.
      * @param remoto {@link ArrayList}<{@link Archivo}> que se encuentran en la carpeta remota del usuario.
      * @param offset diferencia de tiempo entre el cliente y el servidor.

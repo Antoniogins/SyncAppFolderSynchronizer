@@ -39,17 +39,17 @@ import com.syncapp.utility.Utilidades;
  *             {@link #listaArchivos(TokenUsuario) carpeta dentro del servidor} y su {@link com.syncapp.utility.Utilidades#listFiles(Path) carpeta a sincronizar}.
  *         </li>
  *         <li>
- *             Comprobar que archivos faltan en el servidor o en su pc. Esto devolvera una {@link ArrayList<Archivo> lista} de {@link Archivo Archivos}
- *             con aquellos archivos que necesitan mas informacion ({@link String hash}, {@link Long ultima hora modificacion}) para determinar si cargalos o descargarlos.
+ *             Comprobar que archivos no existen en la maquina remota o local.
  *         </li>
  *         <li>
- *             {@link SyncAppCliente#sincronizarConServidor() Cargar} aquellos archivos que seguro sabemos que necesitan cargarse/descargarse.
+ *             Para esos archivos, cargarlos/descargarlos sin mas comprobaciones.
  *         </li>
  *         <li>
- *             Para aquellos archivos que necesitan mas informacion, {@link #obtenerMetadatos(TokenUsuario, ArrayList) obtenerla}.
- *         </li>
- *         <li>
- *             Cargar/descargar aquellos archivos que se consideren necesarios.
+ *             Para aquellos archivos que estan presentes en ambas maquinas, obtener el hash local y hash remoto, y si
+ *             los dos hashes son diferentes, el archivo ha cambiado. Para saber cual cargar/descargar, necesitamos saber
+ *             cual es el mas receiente, haciendo uso de {@link Archivo#timeMilisLastModified}.
+ *             <br>
+ *             Para el archivo mas reciente (tiene mayor milis) lo cargamos/descargamos (dependiendo de donde proceda ese archivo).
  *         </li>
  *     </ol>
  * </p>
@@ -290,10 +290,11 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
     @Override
     public void cerrarArchivo(int fileId, TokenUsuario usuario) throws RemoteException {
         if(fileId <0 ) return;
+        Archivo enCuestion = new Archivo( fileHandler.getFilePath(fileId).toString() );
 
 
         // Mostramos informacion
-        logger.info("cerrando archivo "+fileHandler.getFilePath(fileId));
+        logger.info("cerrando archivo "+enCuestion);
 
         userHandler.cerrarArchivo(fileId);
         fileHandler.closeFile(fileId);
@@ -360,6 +361,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
 
     /**
      * Devuelve la lista de archivos indicada, pero cada archivo contiene los metadatos.
+     * @deprecated - el sistema ha cambiado, pero se puede seguir usando.
      * @param usuario {@link TokenUsuario Usuario} que pide la informacion.
      * @param lista {@link ArrayList} de {@link Archivo} de la que se quiere obtener los metadatos.
      * @return {@link ArrayList} de {@link Archivo} con metadatos.
@@ -378,6 +380,24 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         return Utilidades.obtenerMultiplesMetadatos(lista, Paths.get(usersContainers.toString() , usuario.name));
         
     }
+
+
+    /**
+     * Devuelve el hash de un archivo disponible en el servidor.
+     * @param acalcular {@link Archivo} al cual calcular el hash md5.
+     * @return {@link String hasmd5} del archivo especificado.
+     * @throws RemoteException si ocurre un problema durante la ejecucion el metodo.
+     */
+    @Override
+    public String calcularHash(Archivo acalcular, TokenUsuario usuario) throws RemoteException {
+        acalcular.workingFOlder = usersContainers.resolve(usuario.name).toString();
+        return Utilidades.checkSumhash(acalcular.toFile());
+    }
+
+
+
+
+
 
 
 

@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.syncapp.interfaces.SyncApp;
 import com.syncapp.model.Archivo;
+import com.syncapp.model.LocalRemote;
 import com.syncapp.model.TokenUsuario;
 import com.syncapp.utility.Utilidades;
 import com.syncapp.utility.VariablesGlobales;
@@ -296,52 +297,52 @@ public class SyncAppCliente {
 
     //Servicios de funcionalidad
 
-    public ArrayList<Archivo> ejectuarOperaciones(HashMap< Archivo, Integer> lista) {
-        if(lista == null || lista.size() < 1 ) return null;
-
-        ArrayList<Archivo> pendientes = new ArrayList<>();
-
-        System.out.println("\nOperaciones a realizar:");
-        lista.forEach((a , b) ->{ //a = Archivo  b = int(operacion)
-            try{
-
-                if( ejecutarOperacion(a, b) < 1) {
-                    pendientes.add(a);
-                } 
-
-            } catch(IOException ioe) {
-                ioe.printStackTrace();
-            }
-
-        } );
-
-
-        return pendientes;
-    }
+//    public ArrayList<Archivo> ejectuarOperaciones(HashMap< Archivo, Integer> lista) {
+//        if(lista == null || lista.size() < 1 ) return null;
+//
+//        ArrayList<Archivo> pendientes = new ArrayList<>();
+//
+//        System.out.println("\nOperaciones a realizar:");
+//        lista.forEach((a , b) ->{ //a = Archivo  b = int(operacion)
+//            try{
+//
+//                if( ejecutarOperacion(a, b) < 1) {
+//                    pendientes.add(a);
+//                }
+//
+//            } catch(IOException ioe) {
+//                ioe.printStackTrace();
+//            }
+//
+//        } );
+//
+//
+//        return pendientes;
+//    }
 
 
 
 
     //devuelve >0 si la operacion ya se ha ejecutado y <0 si el archivo necesita mas informacion para decidir que ejecutar
-    public int ejecutarOperacion(Archivo a, int operacion) throws IOException {
+    public Archivo ejecutarOperacion(Archivo archivo, int operacion) throws IOException {
         int returner = 1;
-        System.out.println(VariablesGlobales.toString(operacion)+": "+a);
+        System.out.println(VariablesGlobales.toString(operacion)+": "+archivo);
         switch (operacion) {
             case VariablesGlobales.UPLOAD -> {
-                exec.execute(new Upload(remoteServer, a, workingPath.toString(), user));
+                exec.execute(new Upload(remoteServer, archivo, workingPath.toString(), user));
             }
             case VariablesGlobales.DOWNLOAD -> {
-                exec.execute(new Download(remoteServer, a, workingPath.toString(), user));
+                exec.execute(new Download(remoteServer, archivo, workingPath.toString(), user));
             }
             case VariablesGlobales.MORE_INFO -> {
-                returner = -1;
+                archivo.hash = remoteServer.calcularHash(archivo, user);
             }
             default -> {
                 System.out.println("operacion desconocida");
             }
         }
 
-        return returner;
+        return archivo;
     }
 
     
@@ -353,25 +354,25 @@ public class SyncAppCliente {
         //Obtenemos listas iniciales, sin parametros
         ArrayList<Archivo> local = Utilidades.listFiles(workingPath);
         if (local != null) {
-            System.out.println("tamaño lista local="+local.size()); //TESTS
+            System.out.println("tamaño lista local=" + local.size()); //TESTS
             local.forEach(System.out::println); //TESTS
         }
 
         ArrayList<Archivo> remota = remoteServer.listaArchivos(user);
         if (remota != null) {
-            System.out.println("\ntamaño lista remota="+remota.size()); //TESTS
+            System.out.println("\ntamaño lista remota=" + remota.size()); //TESTS
             remota.forEach(System.out::println); //TESTS
         }
 
-        boolean hayElementosEnLocal = (local != null && local.size() >1) ;
-        boolean hayElementosEnRemoto = (remota != null && remota.size() >1) ;
+        boolean hayElementosEnLocal = (local != null && local.size() > 1);
+        boolean hayElementosEnRemoto = (remota != null && remota.size() > 1);
 
 
         // Si no hay archivos en loca, pero si en remoto, descargamos
-        if(!hayElementosEnLocal && hayElementosEnRemoto) {
+        if (!hayElementosEnLocal && hayElementosEnRemoto) {
             for (Archivo archivo : remota) {
                 try {
-                    ejecutarOperacion(archivo , VariablesGlobales.DOWNLOAD);
+                    ejecutarOperacion(archivo, VariablesGlobales.DOWNLOAD);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -381,10 +382,10 @@ public class SyncAppCliente {
 
 
         // Si no hay en remota, pero si en local
-        if(!hayElementosEnRemoto && hayElementosEnLocal) {
+        if (!hayElementosEnRemoto && hayElementosEnLocal) {
             for (Archivo archivo : local) {
                 try {
-                    ejecutarOperacion(archivo , VariablesGlobales.UPLOAD);
+                    ejecutarOperacion(archivo, VariablesGlobales.UPLOAD);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -392,38 +393,118 @@ public class SyncAppCliente {
             return;
         }
 
+        if (!hayElementosEnLocal && !hayElementosEnRemoto) {
+            return;
+        }
 
 
         // LLegamos aqui si hay archivos tanto en remota como en local
 
+        HashMap<String, LocalRemote> presencia = new HashMap<>();
+
+        local.forEach(c -> {
+            // Ponemos en LocalRemote el archivo local
+            LocalRemote lr = new LocalRemote();
+            lr.setLocal(c);
+            presencia.put(c.ruta, lr);
+        });
+
+        remota.forEach(c -> {
+            String rutaRelativa = c.ruta;
+            // Si el LocalRemote para este archivo ya existia, lo obtenemos y añadimos el archivo remoto
+            if (presencia.containsKey(rutaRelativa)) {
+                LocalRemote lr = presencia.get(rutaRelativa);
+                lr.setRemote(c);
+            }
+            // Si el LocalRemote para este archivo no existia, creamos uno nuevo, añadimos archivo remoto, y lo
+            // introducimos en el mapa
+            else {
+                LocalRemote lr = new LocalRemote();
+                lr.setRemote(c);
+                presencia.put(rutaRelativa, lr);
+            }
+        });
 
 
-        // Primero comprobamos aquellos archivos que no estan presentes en local o remoto, para directamente
-        // cargarlos o descargarlos. Esto ahorra tiempo procesando y transmitiendo metadatos que no van a tener uso
-        HashMap<Archivo , Integer> operaciones = Utilidades.compararListas(local, remota, timeOffset, false);
+        presencia.forEach((rutaRelativa, localRemote) -> { // a= rutaRelativa (string)  b= LocalRemote
+            try {
+                // Si el archivo esta exclusivamente en local, lo cargamos al servidor
+                if (localRemote.exclusivoLocal()) {
+                    ejecutarOperacion(localRemote.getLocal(), VariablesGlobales.UPLOAD);
+                }
 
-        // Ejecutamos las operaciones tipo UPLOAD y DOWNLOAD, y los archivos con operaciones tipo MORE_INFO los añadimos a una lista
-        // para pedir los metadatos de esos archivos
-        ArrayList<Archivo> pendientesPorFaltaDeMetadatos = ejectuarOperaciones(operaciones);
+                // Si el archivo esta exclusivamente en remoto, lo descargamos del servidor
+                else if (localRemote.exclusivoRemoto()) {
+                    ejecutarOperacion(localRemote.getRemoto(), VariablesGlobales.DOWNLOAD);
+                }
 
-        // Si no hay archivos pendientes por falta de metadatos, volvemos
-        if(   !(pendientesPorFaltaDeMetadatos != null && pendientesPorFaltaDeMetadatos.size() >1 )   ) {
-            return;
-        }
+                // Si el archivo esta en ambas maquinas, pedimos el hash para poder comparar
+                else {
+                    String hashLocal = Utilidades.checkSumhash(localRemote.getLocal().toFile());
+                    String hashRemoto = remoteServer.calcularHash(localRemote.getRemoto(), user);
 
-        // Obtenemos los metadatos de los archivos remotos y locales
-        remota = remoteServer.obtenerMetadatos(user, pendientesPorFaltaDeMetadatos);
-        local = Utilidades.obtenerMultiplesMetadatos(pendientesPorFaltaDeMetadatos, workingPath);
+                    // Si el hash es diferentes es porque han cambiado
+                    if (!hashLocal.equals(hashRemoto)) {
 
-        // Comparamos las dos listas para determinar las operaciones a realizar
-        operaciones = Utilidades.compararListas(local, remota, timeOffset, true);
+                        // Comparamos la ultima fecha de modificacion. Si la fecha local es menor que la remota, es porque
+                        // la fecha remota es mas reciente
+                        if (localRemote.getLocal().timeMilisLastModified < localRemote.getRemoto().timeMilisLastModified) {
+                            ejecutarOperacion(localRemote.getRemoto(), VariablesGlobales.DOWNLOAD);
+                        } else {
+                            ejecutarOperacion(localRemote.getLocal(), VariablesGlobales.UPLOAD);
+                        }
 
-        // Ejecutamos las operaciones necesarias.
-        // En este punto ya todos los archivos han sido comparados y no necesitamos volver a iterar la lista de pendientes (sera nula=
-        ejectuarOperaciones(operaciones);
+
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        });
 
 
     }
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//
+//        // Primero comprobamos aquellos archivos que no estan presentes en local o remoto, para directamente
+//        // cargarlos o descargarlos. Esto ahorra tiempo procesando y transmitiendo metadatos que no van a tener uso
+//        HashMap<Archivo , Integer> operaciones = Utilidades.compararListas(local, remota, timeOffset, false);
+//
+//        // Ejecutamos las operaciones tipo UPLOAD y DOWNLOAD, y los archivos con operaciones tipo MORE_INFO los añadimos a una lista
+//        // para pedir los metadatos de esos archivos
+//        ArrayList<Archivo> pendientesPorFaltaDeMetadatos = ejectuarOperaciones(operaciones);
+//
+//        // Si no hay archivos pendientes por falta de metadatos, volvemos
+//        if(   !(pendientesPorFaltaDeMetadatos != null && pendientesPorFaltaDeMetadatos.size() >1 )   ) {
+//            return;
+//        }
+//
+//        // Obtenemos los metadatos de los archivos remotos y locales
+//        remota = remoteServer.obtenerMetadatos(user, pendientesPorFaltaDeMetadatos);
+//        local = Utilidades.obtenerMultiplesMetadatos(pendientesPorFaltaDeMetadatos, workingPath);
+//
+//        // Comparamos las dos listas para determinar las operaciones a realizar
+//        operaciones = Utilidades.compararListas(local, remota, timeOffset, true);
+//
+//        // Ejecutamos las operaciones necesarias.
+//        // En este punto ya todos los archivos han sido comparados y no necesitamos volver a iterar la lista de pendientes (sera nula=
+//        ejectuarOperaciones(operaciones);
+//
+//
+//    }
 
 
 
