@@ -71,24 +71,24 @@ public class Utilidades {
 
         // Por motivos de seguridad, normalizamos el path a iterar, esto se debe a que se puede indicar un directorio
         // superior indicando "..", lo cual en un servidor puede acceder a directorios que los usuarios no deberian acceder.
-        Path real = pathToList.normalize();
+        Path pathNorm = pathToList.normalize();
 
         // Iteramos el directorio indicado
         try {
-            Files.walk(real).forEach(c -> {
+            Files.walk(pathNorm).forEach(c -> {
 
                 // Dado que unicamente queremos poner al archivo la ruta respecto al path de original, lo relativizamos
-                // Por ejemplo: real = /home/usuario/carpeta
-                //                 c = /home/usuario/carpeta/documentos/renta.pdf
-                //                 m = documentos/renta.pdf
-                Path m = real.relativize(c);
+                // Por ejemplo: pathNorm = /home/usuario/carpeta
+                //                     c = /home/usuario/carpeta/documentos/renta.pdf
+                //                     m = documentos/renta.pdf
+                Path m = pathNorm.relativize(c);
 
                 // Si el path c corresponde a un archivo, y su tamaño es mas de 0bytes, lo añadimos a la lista de archivos
                 long fileSize = c.toFile().length();
 //                System.out.println(fileSize);
                 if (c.toFile().isFile() && fileSize > 0){
 //                    System.out.println("tiene mas de 0bytes asi que añado");
-                    Archivo toAdd = new Archivo(m, real);
+                    Archivo toAdd = new Archivo(m, pathNorm);
                     toAdd.sizeInBytes = fileSize;
                     lista.add(toAdd);
                 }

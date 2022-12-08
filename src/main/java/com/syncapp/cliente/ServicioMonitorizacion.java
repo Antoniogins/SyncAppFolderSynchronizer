@@ -63,10 +63,7 @@ public class ServicioMonitorizacion implements Runnable {
      */
     boolean goToSleep;
 
-    /**
-     * Variable que se usa de forma auxiliar entre un metodo y una funcion lambda.
-     */
-    boolean containsPath;
+
 
 
 
@@ -140,34 +137,38 @@ public class ServicioMonitorizacion implements Runnable {
 
 
     /**
-     *
-     * @throws IOException
+     * Este metodo permite actualizar las carpetas registradas. Para ello, cuando se observa que se ha creado una nueva
+     * carpeta, se invoca este metodo, que recorrera todas las carpetas, dentro de la carpeta de sincronizacion, y
+     * registrara aquellas que no estuvieran registradas.
+     * @throws IOException si ocurre algun problema recorriendo las carpetas.
      */
 
     public void actualizarCarpetasRegistradas() throws IOException {
 
         System.out.println("working path="+sac.getWorkingPath().toString()); //TESTS
+
+        // Obtenemos la lista de carpetas dentro del directorio de trabajo
         ArrayList<Path> listaCarpetas = Utilidades.listFolders(sac.getWorkingPath());
+
+        // Recorremos la lista de carpetas
         listaCarpetas.forEach(c -> {
 
+            // Obtenemos la ruta absoluta de la carpeta
             Path pathAbsoluto = sac.getWorkingPath().resolve(c);
 
-            containsPath = false;
-
-            pathsRegistrados.forEach( (a,b) -> {
-                if(  pathAbsoluto.toString().equals(b.toString())  ) {
-                    containsPath = true;
-                    return;
-                }
-            });
-
-            if (!containsPath) {
+            // Comprobamos si la carpeta ya estaba registrada, en caso afirmativo, registramos la carpeta
+            if (!pathsRegistrados.containsValue(pathAbsoluto)) {
                 try {
 
+                    // Registramos el path con el monitor, y le indicamos que escuche los eventos ENTRY_CREATE y
+                    // ENTRY_MODIFY para esta carpeta
                     WatchKey wk = pathAbsoluto.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
                             StandardWatchEventKinds.ENTRY_MODIFY);
 
+                    // Añadimos la carpeta registrada al registro de carpetas
                     pathsRegistrados.put(wk, pathAbsoluto);
+
+                    // Mostramos por pantalla que se ha registrado la carpeta
                     System.out.println("registrado "+VariablesGlobales.COLOR_YELLOW+"[READ,MODIFY]"+VariablesGlobales.COLOR_WHITE+" \"" + pathAbsoluto.toString() + "\"");
 
 
@@ -176,17 +177,37 @@ public class ServicioMonitorizacion implements Runnable {
                 }
             }
 
+
+
+
+
         });
 
     }
 
 
-
-
+    /**
+     * Con este metodo, podemos observar si ha ocurrido algun evento dentro de las carpetas que estamos observando.
+     * Tiene dos modos de funcionamiento:
+     * <ol>
+     *     <li>
+     *         Cuando obtenemos la clave que se ha modificado, se bloquea hasta que exista el evento. Este modo de
+     *         operacion se realiza cuando {@link #goToSleep} es true.
+     *     </li>
+     *     <li>
+     *         Cuando obtenemos la clave que se ha modificado, obtenemos un valor instantaneo de las claves modificadas,
+     *         no bloqueando el monitor. En caso de que existan claves, las devuelve, y en caso de que no existan claves,
+     *         devuelve null. Este modo de operacion se realiza cuando {@link #goToSleep} es false.
+     *     </li>
+     * </ol>
+     * @throws InterruptedException
+     */
     public void observar() throws InterruptedException {
 
+        // Indicamos la variable para poder usarla despues
         WatchKey key = null;
 
+        // Comprobamos el modo de observacion, bloqueante o no bloqueante
         if(goToSleep) {
             key = watcher.take(); //take() se bloquea (duerme) hasta que ocurre un evento
         } else {
@@ -194,37 +215,45 @@ public class ServicioMonitorizacion implements Runnable {
                                   // hay ninguna.
         }
 
-
+        // Si la clave es nula retorna (pues no hay clave que observar)
         if(key == null) {
             return;
         }
 
-
+        // Obtenemos la lista de eventos que han ocurrido para la clave obtenida. Iteramos esta lista
         for (WatchEvent<?> we : key.pollEvents()) {
 
+            // Obtenemos el tipo de evento generado
             WatchEvent.Kind<?> tipoEvento = we.kind();
+
+            // Como sabemos que los eventos son generados por paths, transformamos la lista de eventos genericos
+            // en lista de eventos de paths. Para realizar esta operacion debemos estar seguros que unicamente
+            // hemos registrado eventos sobre paths, pues el casteo de otro tipo de evento a path produciria error.
             WatchEvent<Path> observables = (WatchEvent<Path>) we;
 
 
-
+            // Obtenemos el nombre de la carpeta que ha generado el evento
             Path carpetaPadre = pathsRegistrados.get(key);
-//            System.out.println("carpeta padre=\""+carpetaPadre.toString()+"\"");
+
+            // Obtenemos la ruta completa del archivo. Para ello obtenemos el contexto (archivo modificado/creado) y
+            // lo derivamos de la carpeta padre
             Path archivo = carpetaPadre.resolve(observables.context());
-//            System.out.println("ruta del archivo modificado=\""+archivo.toString());
 
 
-
+            // Mostramos el evento ocurrido
             System.out.println("evento "+VariablesGlobales.COLOR_YELLOW+tipoEvento+VariablesGlobales.COLOR_WHITE+" "+archivo);
 
 
 
-            //Si el evento que ha ocurrido es un directorio, actualizamos carpetas y reseteamos la clave
+            // Comprobamos si el evento que ha ocurrido es un directorio, actualizamos carpetas y reseteamos la clave
             if (archivo.toFile().isDirectory()) {
                 try {
                     actualizarCarpetasRegistradas();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+                // Reseteamos la clave para que se sigan escuchando eventos de esta clave
                 key.reset();
                 continue;
             }
@@ -233,7 +262,7 @@ public class ServicioMonitorizacion implements Runnable {
 
 
 
-            // comprobamos si el archivo es un archivo oculto -> estos no se deben
+            // Comprobamos si el archivo es un archivo oculto -> estos no se deben
             // sincronizar (problemas)
             String filename = archivo.getFileName().toString();
             if (filename.charAt(0) == '.' || filename.charAt(0) == '~') {
@@ -248,16 +277,16 @@ public class ServicioMonitorizacion implements Runnable {
 
             try {
 
+                // Comprobamos si el evento que se ha generado es tipo CREATE o MODIFY
                 if (tipoEvento.equals(ENTRY_CREATE)  || tipoEvento.equals(ENTRY_MODIFY)) {
-//                    System.out.println("llegamos a test, con archivo=\"" + archivo + "\"");
 
 
-                    // Actualizamos la ultima vez que ha cambiado el archivo observado
+                    // Actualizamos la ultima vez que se ha observado una modificacion del archivo
                     reloj.put(archivo, System.currentTimeMillis());
 
 
                     //Ya que vamos a comprobar a los 20s si el archivo ha vuelto a ser modificado, ponemos que el
-                    // cliente no se vaya a bloquear
+                    // cliente no se vaya a bloquear, para que cada 2s compruebe los valores del registro del reloj
                     goToSleep = false;
 
 
@@ -288,21 +317,39 @@ public class ServicioMonitorizacion implements Runnable {
 
     }
 
+
+    /**
+     * Este metodo nos permite actualizar los valores de reloj de los archivo. Esto se hace para controlar cuando subir
+     * un archivo. Dado que un archivo se modifica linea a linea, o byte a byte, mientras se esta trabajando con un archivo
+     * se van a generar multiples eventos, y transmitir constantemente el archivo por completo es redundante e ineficiente.
+     */
     public void actualizar() {
 
+        // Creamos una lista para los archivos que hayan pasado mas de 20s, y queremos removerlos de los relojes
         ArrayList<Path> listaDeRelojesABorrarSincronamente = new ArrayList<>();
 
+        // Obtenemos la hora actual del cliente
         long actual = System.currentTimeMillis();
+
+        // Iteramos el reloj, para saber cual de los archivos ha completado el tiempo de espera
         reloj.forEach((a, b) -> { // a=archivo b=tiempo
+
+            // Comparamos la hora actual con la hora en que se modifico el archivo por ultima vez. Si el resultado
+            // de esta comparacion es que han pasado mas de 20s, enviamos el archivo al servidor
             if (actual - b > 20000) {
-                System.out.println("prueba 2:"+(actual - b > 20000));
+
+
                 // 20000ms = 20s -> actualizamos cada 20s para que no tengamos que enviar
                 // informacion innecesaria (cada byte o linea que se escribe de un archivo lanza
                 // un evento , entonces si actualziamos cada vez que semodifica un byte estamos
                 // enviando el resto de bytes redundantemente)
 
-                System.out.println("prueba1: ruta="+a.toString()+" existe="+a.toFile().exists());
+                // Comprobamos que al archivo exista, debido a que puede ocurrir que el archivo se elimine antes
+                // de que se transmite
+//                System.out.println("prueba1: ruta="+a.toString()+" existe="+a.toFile().exists());
                 if (!a.toFile().exists()) {
+
+                    // añadimos el archivo a la lista de archivo a eliminar
                     listaDeRelojesABorrarSincronamente.add(a);
                     return;
                     // salta esta iteracion, dado que esto se ejecuta asincronamente puede que el
@@ -312,9 +359,8 @@ public class ServicioMonitorizacion implements Runnable {
 
 
 
-                //ACTUALIZAR ESTOOOO
+                // Intentamos enviar el archivo
                 try {
-//                    Path relativo = sac.getWorkingPath().relativize(a);
                     System.out.println("enviando archivo="+a);
                     sac.ejecutarOperacion(new Archivo(a , sac.getWorkingPath()) , VariablesGlobales.UPLOAD);
                     listaDeRelojesABorrarSincronamente.add(a);
@@ -325,9 +371,12 @@ public class ServicioMonitorizacion implements Runnable {
             }
         });
 
+        // Una vez acabamos de iterar todos los relojes, eliminamos del reloj la lista de archivos indicada
         listaDeRelojesABorrarSincronamente.forEach(reloj::remove); //como c -> reloj.remove(c)
 
 
+        // Si tras iterar, el reloj queda vacio, es porque no quedan eventos pendientes, por tanto pasamos el monitor
+        // al modo dormir hasta que ocurra un nuevo evento
         if(reloj.isEmpty()) {
             //Dado que no hay mas relojes de archivo que observar (no queda ningun temporizador) mandamos a dormir
             goToSleep = true;
@@ -337,9 +386,9 @@ public class ServicioMonitorizacion implements Runnable {
     }
 
 
-
-
-
+    /**
+     * Este metodo nos permite cerrar el monitor, cancelando todos los monitores de paths, cancelando sus claves
+     */
     public void dejarDeObservar() {
         pathsRegistrados.forEach((a, b) -> a.cancel());
         pathsRegistrados.clear();
@@ -347,19 +396,26 @@ public class ServicioMonitorizacion implements Runnable {
     }
 
 
-
-
-
-
-
+    /**
+     * Tarea de ejecucion para permitir al monitor ejecutarse en un hilo aparte del hilo principal del cliente. Esta
+     * tarea se ejecuta de forma indefinida hasta que se indique finalizar el monitor. <br>
+     * La funcion principal de esta tarea, es observar los eventos y realizar las funciones descrtas para esta clase.
+     */
     @Override
     public void run() {
         try {
+            
 
-
+            // Mientras se indique que funcione, se ejecuta
             while(keep) {
+
+                // Dormimos el hilo 2s, para optimizar el monitor
                 Thread.sleep(2000);
+
+                // Observamos si ha ocurrido algun evento
                 observar();
+
+                // Actualizamos el reloj, comprobando si algun evento a alcanzado su fin
                 actualizar();
             }
 
