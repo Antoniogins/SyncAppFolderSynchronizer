@@ -11,63 +11,145 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 
+
+/**
+ * Tarea de descarga de un archivo. Permite al cliente ejecutar la descarga de un archivo mediante un hilo, puediendo
+ * optimizar el cliente.
+ */
 public class Download implements Runnable{
 
+    /**
+     * Servidor del que se va a descargar el archivo.
+     */
     SyncApp server;
+
+    /**
+     * Identificador del archivo que se va a descarga. Inicialmente no se conoce, hasta que se le pide al servidor el mismo.
+     */
     int fileId;
+
+    /**
+     * Ruta relativa del archivo que se quiere descargar.
+     */
     Archivo ruta;
+
+    /**
+     * Directorio de trabajo del cliente, para poder obtener la ruta completa del archivo que hay que escribir en la
+     * maquina local.
+     */
     Path abs;
+
+    /**
+     * Usuario que quiere descargar el archivo.
+     */
     TokenUsuario usuario;
+
+    /**
+     * Lector de archivos que se usara para escribir el archivo en la maquina local.
+     */
     LectorArchivos lectorArchivos;
-//    int ultimo_enviado;
+
+    /**
+     * Posicion del bloque que se esta enviando. Es especialmente util cuando se interrumpe una transmision, y queremos
+     * asegurarnos de obtener el bloque completo.
+     */
     long posicionActual;
 
+
+
+
+    // Constructor
+
+    /**
+     * En el constructor necesitamos indicar los parametros necesarios para realizar la transmision del archivo.
+     * @param server {@link SyncApp servidor} con el que queremos transmitir.
+     * @param ruta {@link Archivo} que queremos transmitir.
+     * @param pathlocal {@link String directorio} de trabajo del cliente.
+     * @param usuario {@link TokenUsuario usuario} con que el que iniciaremos la transmision. Previamente necesitara
+     *                                            haber iniciado sesion.
+     * @throws IOException si ocurre un problema al crear el {@link LectorArchivos}.
+     */
     public Download(SyncApp server, Archivo ruta, String pathlocal, TokenUsuario usuario) throws IOException {
+
+        // Guardamos los valores
         this.server = server;
         this.usuario = usuario;
-
         this.ruta = ruta;
         this.ruta.workingFOlder = pathlocal;
         this.abs = this.ruta.toPath();
 
-
-
         this.lectorArchivos = new LectorArchivos(abs, "rw", 999);
-//        ultimo_enviado = -1; //Todavia no se ha enviado ninguno
+
+        // Ponemos la posicion en 0, para comenzar desde el principio.
         posicionActual = 0;
     }
 
 
 
 
-    boolean siguienteBloque() {
-        BloqueBytes bloque = new BloqueBytes();
 
+
+
+
+
+
+
+
+
+    /**
+     * Este metodo nos permite leer de forma controlada un bloque de bytes desde el servidor. Se debe ejecutar hasta
+     * que devuelva falso, que significara que ha terminado de descargar el archivo.
+     * @return
+     * <ul>
+     *     <li>
+     *         Verdadero - si quedan bloques por leer para completar el archivo.
+     *     </li>
+     *     <li>
+     *         Falso - si ya se han leido todos los bloques.
+     *     </li>
+     * </ul>
+     */
+    boolean siguienteBloque() {
+
+        // Creamos la variable que representa el bloque a descargar
+        BloqueBytes bloque = null;
+
+        // Utilizamos esta variable para reintentar leer el bloque de bytes hasta que se tenga exito
         boolean reintentarLectura = true;
         while(reintentarLectura) {
             try {
+                // Leemos el bloque de bytes del servidor
                 bloque = server.leerBloqueBytes(fileId, posicionActual);
 
-                // Llegamos unicamente a este putno si leerBloqueBytes tiene exito
+                // Llegamos unicamente a este putno si leerBloqueBytes tiene exito, por tanto dejamos de reintentar
                 reintentarLectura = false;
+
             } catch (RemoteException e) {
                 System.out.println("reintentando leer file="+ fileId +" pos="+posicionActual);
                 e.printStackTrace();
             }
         }
 
+        // Si ocurre algun problema, se devuelve falso
         if(bloque == null) {
             return false;
         }
 
 
+        // Utilizamos esta variable para reintentar escribir el bloque en la maquina local
         boolean reintentarEnvio = true;
         while (reintentarEnvio) {
             try {
+
+                // Intentamos escribir el bloque de bytes
                 lectorArchivos.escribirBloqueBytes(bloque);
 
-                // Si llegamos a este punto, es que escribir el bloque en el servidor ha tenido exito
+                // Si llegamos a este punto, es que se ha escrito el bloque con exito en la maquina local
+
+                // Dejamos de reintentar escribir el bloque
                 reintentarEnvio = false;
+
+                // Como hemos conseguido escribir el bloque con exito, aumentamos la posicion que se debe leer
                 posicionActual += bloque.size;
 
 
@@ -81,14 +163,17 @@ public class Download implements Runnable{
     }
 
 
-
-
-
-
-
-
-
+    /**
+     * Tarea de descarga del archivo. Con este metodo, que proviene de implementar la interfaz Runnable, permitimos
+     * que gestor de tareas, ejecute la tarea en un nuevo hilo, permitiendo asi poder transmitir archivos de
+     * forma concurrente.
+     * <br>
+     * Para descargar el archivo, seguimos las instrucciones indicadadas en la {@link SyncApp interfaz del servicio}, en
+     * el apartado de carga/descarga de archivos.
+     */
     public void run() {
+
+        // Obtenemos el identificador del archivo
         try {
             fileId = server.abrirArchivo(usuario, ruta, "r");
         } catch (RemoteException e1) {
@@ -97,10 +182,12 @@ public class Download implements Runnable{
         }
         System.out.println("bajando file="+ fileId +" ruta="+ruta.toString());
 
+        // Le inticamos al lector de archivo y al propio archivo el identificador remoto
         lectorArchivos.setFileId(fileId);
         ruta.remoteID = ""+fileId;
 
 
+        // Troceamos el archivo en bloques, y recibimos bloques hasta que no quede ninguno por recibir
         boolean quedanBloques;
         do {
             quedanBloques = siguienteBloque();
@@ -119,104 +206,6 @@ public class Download implements Runnable{
         System.out.println("Archivo file="+ fileId +" descargado");
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-//        lectorArchivos.id_file = fileId;
-//        boolean keep = true;
-//        BloqueBytes bb = null;
-//        boolean saltarLectura = false;
-//        boolean reintentarLocal = false;
-//
-//        boolean reintentarLectura = true;
-//        while(reintentarLectura) {
-//            try {
-//                bb = lectorArchivos.leerBloqueBytes(posicionActual);
-//
-//                // Llegamos unicamente a este putno si leerBloqueBytes tiene exito
-//                reintentarLectura = false;
-//            } catch (IOException e) {
-//                System.out.println("reintentando leer file="+ fileId +" bloque="+(ultimo_enviado+1));
-//                e.printStackTrace();
-//            }
-//        }
-//
-//
-//
-//        while(keep) {
-//            // Si se activa intentarRemoto es porque ha fallado al enviar el ultimo bloque,
-//            // por tanto no leemos e intentamos reenviar ese bloque fallido, que todavia lo
-//            // tenemos en memoria
-//            if (!saltarLectura) {
-//                try {
-//                    if(!reintentarLocal) {
-//                        bb = lectorArchivos.leerBloqueBytes(posicionActual);
-//                    }
-//
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                    System.out.println("reintentando leer file="+ fileId +" bloque="+(ultimo_enviado+1));
-//                    reintentarLocal = true;
-//                }
-//
-//                // Comprobamos si bloque es null o su tamaño es 0, esto indica que hemos acabado
-//                // de leer el archivo, salimos
-//                if (bb == null || bb.size == 0) {
-//                    keep = false;
-//                    continue;
-//                }
-//
-//            }
-//
-//
-//
-//
-//            try {
-//                server.escribirBloqueBytes(fileId, bb);
-//
-//                // Si se ejecuta este bloque es porque escribirBloqueBytes no ha fallado,
-//                // dejamos de reintentarlo
-//                saltarLectura = false;
-//                posicionActual += bb.size;
-//                ultimo_enviado++;
-//                // System.out.println(bb.toString());
-//
-//
-//            } catch (RemoteException e) {
-//                e.printStackTrace();
-//                saltarLectura = true;
-//                // Queremos que salte la lectura para que intente reenvia el ultimo bloque que
-//                // todavia tenemos en memoria
-//            }
-//
-//
-//        }
-//
-//
-//
-//        try {
-//            server.cerrarArchivo(fileId, tu);
-//        } catch (RemoteException e) {
-//            e.printStackTrace();
-//        }
-//
-//        try {
-//            lectorArchivos.cerrarArchivo();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        System.out.println("Archivo file="+ fileId +" cargado");
 
 
 

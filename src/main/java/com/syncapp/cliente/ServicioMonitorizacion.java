@@ -16,32 +16,133 @@ import com.syncapp.utility.Utilidades;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 
+/**
+ * Este objeto nos permite monitorizar la carpeta de sincronizacion, en busca de archivos que se creen/modifiquen.
+ * En el caso de que un archivo se haya modificado/creado, se esperara 20s para subirlo. Esto se realiza, ya que para
+ * cada modificacion de un archivo (por ejemplo escribir una linea) se crea un nuevo evento, entonces si para cada
+ * evento cargamos el archivo, podemos producir problemas de integridad, y una redundancia de bytes (los archivos cada
+ * vez que se carga, se cargan desde el primer hasta el ultimo byte, no por tramos). <br>
+ * Ademas, para optimizar un poco mas el monitor, cuando se detecta un evento, se bloquea el servicio durante dos segundos,
+ * ya que suelen ocurrir rafas de eventos redundantes. Para ello, detectamos un evento, en vez de obtener las claves
+ * con el metodo bloqueante {@link WatchService#take()}, obtenemos las claves mediante {@link WatchService#poll()}, que
+ * comprobara si hay alguna clave encolada, o devolvera null si no hay niguna. Una vez que terminemos de subir el archivo,
+ * mediante {@link ServicioMonitorizacion#goToSleep}, haremos que el monitor obtenga las claves con el servicio bloqueante,
+ * y se ira a dormir hasta que ocurra un evento.
+ */
 public class ServicioMonitorizacion implements Runnable {
 
+    /**
+     * Cliente al que se le realiza el servicio de monitor.
+     */
     SyncAppCliente sac;
+
+    /**
+     * Monitor de eventos generico.
+     */
     WatchService watcher;
+
+    /**
+     * Mapa de rutas registradas para una clave de evento.
+     */
     HashMap< WatchKey, Path> pathsRegistrados;
+
+    /**
+     * Contadores para determinar si un archivo ha pasado el suficiente tiempo sin modificar como para que sea cargado
+     * al servidor.
+     */
     HashMap< Path, Long> reloj;
+
+    /**
+     * Variable que permite controlar cuando el monitor debe seguir trabajando o finalizar.
+     */
     boolean keep;
+
+    /**
+     * Variable que determina si el monitor debe leer una clave mediante el metodo bloqueante o mediante el metodo
+     * no bloqueante.
+     */
     boolean goToSleep;
 
+    /**
+     * Variable que se usa de forma auxiliar entre un metodo y una funcion lambda.
+     */
     boolean containsPath;
 
+
+
+
+
+
+
+
+
+
+    // Constructor
+
+    /**
+     * Con el constructor, podemos crear un servicio de monitorizacion a partir del cliente sobre el que quiere monitorizar.
+     * Para ello, desde el cliente {@link SyncAppCliente#getWorkingPath() obtenemos} la carpeta de sincronizacion, y la
+     * iteramos, para conocer los subdirectorios, y cada uno de ellos lo registramos en el monitor de eventos (ademas
+     * de registrar la carpeta de sincronizacion misa, para los archivos raiz).
+     * @param sac {@link SyncAppCliente cliente} que quiere monitorizar su carpeta.
+     * @throws IOException si ocurre un fallo al iterar las subcarpetas.
+     */
     public ServicioMonitorizacion(SyncAppCliente sac) throws IOException {
         // mejor que lance excepcion, asi el cliente sabe que se ha producido un error y
         // actue consecuentemente
 
-        if (sac == null)
+        // Comprobamos que el cliente no sea nulo
+        if (sac == null) {
             return;
+        }
+
+        // Añadimos el cliente a las variables del monitor
         this.sac = sac;
+
+        // Creamos un nuevo mapa para el reloj de los archivos
         reloj = new HashMap<>();
+
+        // Indicamos que funcione
         keep = true;
+
+        // Obtenemos un monitor a partir del sistema
         this.watcher = FileSystems.getDefault().newWatchService();
         System.out.println("\niniciando servicio de monitorizacion");
+
+        // Creamos el mapa de carpetas registradas
         pathsRegistrados = new HashMap<>();
-        goToSleep = true;
+
+        // Buscamos los subdirectorios y los añadimos
         actualizarCarpetasRegistradas();
+
+        // Indicamos que obtenga claves de forma bloqueante
+        goToSleep = true;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     *
+     * @throws IOException
+     */
 
     public void actualizarCarpetasRegistradas() throws IOException {
 

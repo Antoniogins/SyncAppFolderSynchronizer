@@ -5,6 +5,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * Cliente por interfaz grafica. Permite ejecutar un {@link SyncAppCliente} de forma grafica, pudiendo introducir
+ * parametros mediante botones, y obtener una visualizacion mas limpia del cliente.
+ */
 public class ClienteGUI extends JFrame implements ActionListener {
 
 	// Variables

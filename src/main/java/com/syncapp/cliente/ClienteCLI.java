@@ -7,12 +7,14 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-
-import com.syncapp.model.Archivo;
 import com.syncapp.model.TokenUsuario;
 import com.syncapp.utility.Utilidades;
 
+
+/**
+ * Cliente por consola. Permite iniciar el {@link SyncAppCliente} en linea de comandos, permitiendo ejecutar comandos
+ * posteriormente a la primera sincronizacion con el servidor. Es el principal cliente.
+ */
 public class ClienteCLI {
 
 
@@ -23,21 +25,53 @@ public class ClienteCLI {
     // args[3] -> carpeta
     // args[4] -> threads
 
+    /**
+     * Este array de String permite almacenar los parametros con los que ejecutar el {@link SyncAppCliente}. En una
+     * primera instancia, se almacenan los argumentos indicados al ejecutar el cliente, y posteriormente, almacenara
+     * los valores que se introduzcan por consola, para cuando el usuario pida volver a sincronizar toda la carpeta,
+     * se ejecute el cliente con estos parametros.
+     * <br>
+     * Estos parametros se almacenan segun las directivas de {@link SyncAppCliente}:
+     * <ul>
+     *     <li>
+     *         Direccion IP se almacena en la posicion {@link SyncAppCliente#ARG_IP}.
+     *     </li>
+     *     <li>
+     *         Puerto se almacena en la posicion {@link SyncAppCliente#ARG_PUERTO}.
+     *     </li>
+     *     <li>
+     *         Nombre de usuario se almacena en la posicion {@link SyncAppCliente#ARG_USUARIO}.
+     *     </li>
+     *     <li>
+     *         Carpeta de sincronizacion se almacena en la posicion {@link SyncAppCliente#ARG_CARPETA}.
+     *     </li>
+     *     <li>
+     *         Numero de hilos se almacena en la posicion {@link SyncAppCliente#ARG_HILOS}.
+     *     </li>
+     * </ul>
+     */
     static String[] lastParams;
 
 
-
+    /**
+     * Metodo principal para ejecutar el cliente.
+     * @param args argumentos de entrada listados anteriormente. Son NECESARIOS.
+     * @throws RemoteException si ocurre algun fallo al ejecutar RMI.
+     * @throws MalformedURLException si se introduce una direccion incorrecta.
+     * @throws NotBoundException si se intenta ejecutar un servicio que no esta disponible (o no existe) en el registro RMI.
+     */
     public static void main(String[] args) throws RemoteException, MalformedURLException, NotBoundException {
+        if(args == null || args.length != 5) return;
+
+        // Guardamos los argumentos iniciales y los mostramos por pantalla
+        lastParams = args;
         System.out.println("Args iniciales:");
         for (String ar : args) {
             System.out.print(ar+", ");
         }
         System.out.println();
-        if(args == null || args.length != 5) return;
-        
-        if(lastParams == null) {
-            lastParams = args;
-        }
+
+
 
 
 
@@ -66,26 +100,13 @@ public class ClienteCLI {
 
 
         // Comenzamos a comparar que archivos hay que sincronizar
-        // Primero obtenemos una lista con los archivos que no tienen presencia local o
-        // remota, ya que sabemos que estos los tenemos que sincronizar.
-
-        // Segundo, tras ejecutar el primer paso, obtendremos una lista con los archivos
-        // que necesitan mas informacion para determinar si hay que sincronizarlos. Para
-        // ello, a esa lista de archivo pedimos al servidor que nos devulva esa misma
-        // lista, pero con la informacion necesaria. Realizamos la misma operacion pero
-        // en local, con esa misma lista. Una vez tengamos esas dos listas con
-        // informacion, decidimos que operacion se necesita ejecutar.
-
-        // Hay que tener en cuenta, que tras obtener estas listas, automaticamente se
-        // ejecuta la funcion "ejecutarOperaciones", que vera que operacion se ha
-        // determinado para cada uno de los archivos, y ejecuta la operacion necesaria
 
         cliente.sincronizarConServidor();
 
 
         // Bloqueamos la aplicacion hasta que se termine de descargar todos los archivos.
         // Realizamos esta operacion, ya que si hay muchos archivos que transmitir, el
-        // monitor de carpetas detectara como nuevos/modificados los archivos que se descargue
+        // monitor de carpetas detectara como nuevos/modificados los archivos que se descarguen
         // y los volvera a cargar (esto no debe pasar)
         cliente.esperarHastaTerminarTransmisiones();
         System.out.println("se acabaron las transmisiones");
@@ -128,7 +149,6 @@ public class ClienteCLI {
                         String helped =
                                 "\ncomandos disponibles: " +
                                         "\n\tclose         ->  cierra la aplicacion  " +
-                                        "\n\treload        ->  vuelve a sincronizar las carpetas desde cero  " +
                                         "\n\tuser:value    ->  cambia de usuario a valor \"value\"  " +
                                         "\n\tip:a.b.c.d:p  ->  establece una nueva ip de servidor (puerto se puede omitir, 1099 por defecto)" +
                                         "\n\tthreads:n     ->  establece a \"n\" el maximo de archivos transferibles simultaneamente" +
@@ -138,7 +158,7 @@ public class ClienteCLI {
                                         "\n\tlist:lri      ->  muestra una lista con los archivos de la siguiente forma:" +
                                         "\n\t                        -l: lista de archivos remotos" +
                                         "\n\t                        -r: lista de archivos locales" +
-                                        "\n\t                        -i: mostrar informacion (hash, ultima modificacion)" +
+                                        "\n\t                        -i: obtener hash" +
                                         "\n\t                  para ello escriba las letras de la informacion que quiera mostrar" +
                                         "\n\thelp          ->  muestra este texto xD  ";
                         System.out.println(helped);
@@ -148,13 +168,9 @@ public class ClienteCLI {
                     //CADA VEZ QUE EDITEMOS UN PARAMETRO HAY QUE RECORDAR CAMBIAR lastParams
                     case "close" -> {
                         System.out.println("cerrando aplicacion");
-                        //sac.cerrarCliente
                         keepWorking = false;
+                        cliente.close();
 
-                    }
-                    case "reload" -> {
-                        main(lastParams);
-                        keepWorking = false;
                     }
                     case "user" -> {
                         cliente.setUser(new TokenUsuario(sentencia[1]));
@@ -174,27 +190,35 @@ public class ClienteCLI {
                         lastParams[SyncAppCliente.ARG_CARPETA] = sentencia[1];
                     }
                     case "sincronizar" -> {
-                        cliente.sincronizarConServidor();
                         cliente.esperarHastaTerminarTransmisiones();
+                        cliente.sincronizarConServidor();
                     }
                     case "delete" -> {
                     }
                     case "list" -> {
-                        Utilidades.listFiles(cliente.getWorkingPath()).forEach(System.out::println);
-                        for (String s : sentencia) {
-                            if (sentencia[1].charAt(0) == 'l') {
-                                //.listFolders(cliente.getWorkingPath());
-                            } else if (sentencia[1].charAt((0)) == 'r') {
-                                Utilidades.listFolders(cliente.getWorkingPath());
-                            } else if (sentencia[1].charAt((0)) == 'i') {
-                                //
+                        boolean listaLocal = false;
+                        boolean listaRemota = false;
+                        boolean conHash = false;
+
+                        // Leemos los caracteres indicados
+                        for (char ind : sentencia[1].toCharArray()) {
+                            if (ind == 'l') {
+                                listaLocal = true;
+                            } else if (ind == 'r') {
+                                listaRemota = true;
+                            } else if (ind == 'i') {
+                                conHash = true;
                             }
                         }
+
+                        // POR IMPLEMENTAR ESTA PARTE
+
+
 
 
                     }
                     default -> {
-                        System.out.println("comando desconocido, intenta de nuevo ... ");
+                        System.out.print("comando desconocido, intenta de nuevo: ");
                     }
                 }
     

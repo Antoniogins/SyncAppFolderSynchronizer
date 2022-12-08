@@ -151,15 +151,29 @@ public class Archivo implements Serializable {
         return toRet +  VariablesGlobales.COLOR_MAGENTA + sizeText + VariablesGlobales.COLOR_WHITE + " ]";
     }
 
+    /**
+     * Con este metodo podemos convertir el archivo en un {@link Path} absoluto, uniendo la ruta de trabajo del archivo
+     * mas su propia ruta relativa.
+     * @return {@link Path} absoluto del archivo (workingFloder + ruta).
+     */
     public Path toPath() {
         return Paths.get(workingFOlder , ruta);
     }
 
+    /**
+     * Con este metodo podemos convertir el archivo en un {@link Path}, pero unicamente con la ruta relativa del archivo.
+     * @return {@link Path} relativo del archivo.
+     */
     public Path toRelativePath() {
         return Paths.get(ruta);
     }
 
 
+    /**
+     * Con este metodo podemos convertir el archivo en un {@link File}, para ello se usa la ruta completa del archivo (
+     * ruta de trabajo + ruta del archivo).
+     * @return
+     */
     public File toFile() {
         return Paths.get(workingFOlder , ruta).toFile();
     }

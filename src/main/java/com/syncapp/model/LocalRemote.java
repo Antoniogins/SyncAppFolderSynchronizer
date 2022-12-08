@@ -1,6 +1,12 @@
 package com.syncapp.model;
 
-
+/**
+ * Esta clase se implementa para facilitar el uso de comparar archivos. Para ello se guarda el mismo archivo pero
+ * con dos instancias: la local y la remota. En este objeto, tras recorrer las listas de archivos, se ira almacenando
+ * los archivos correspondientes en local o en remoto, y sera de gran ayuda para determinar si un archivo debe ser
+ * cargado/descargado.<br>
+ * Ademas se dispone de metodos que resuelven este problema.
+ */
 public class LocalRemote {
 
     // Desactualizados
@@ -21,12 +27,12 @@ public class LocalRemote {
     // Nueva implementacion
 
     /**
-     * Archivo local.
+     * Archivo local. Incluye su ruta, sus metadatos, etc.
      */
     private Archivo local;
 
     /**
-     * Archivo remoto.
+     * Archivo remoto. Incluye su ruta, sus metadatos, etc.
      */
     private Archivo remoto;
 
@@ -36,27 +42,6 @@ public class LocalRemote {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-    // Constructor - antigua implementacion
-
-    /**
-     * Constructo para la antigua implementacion.
-     * @deprecated - antigua implementacion.
-     */
-    public LocalRemote(){
-        presentInLocal = false;
-        presentInRemote = false;
-    }
 
 
 
@@ -105,7 +90,8 @@ public class LocalRemote {
      * @return
      * <ul>
      *     <li>
-     *         Verdadero - si hay archivo local y no hay archivo remoto.
+     *         Verdadero - si hay archivo local y no hay archivo remoto. Permite determinar que el archivo se debe
+     *         cargar al servidor.
      *     </li>
      *     <li>
      *         Falso - en caso contrario.
@@ -122,7 +108,8 @@ public class LocalRemote {
      * @return
      * <ul>
      *     <li>
-     *         Verdadero - si hay archivo remoto y no hay archivo local.
+     *         Verdadero - si hay archivo remoto y no hay archivo local. Permite determinar que el archivo se debe
+     *         descargar del servidor.
      *     </li>
      *     <li>
      *         Falso - en caso contrario.
