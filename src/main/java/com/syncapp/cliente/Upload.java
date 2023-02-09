@@ -2,7 +2,6 @@ package com.syncapp.cliente;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 
 import com.syncapp.interfaces.SyncApp;
@@ -79,7 +78,7 @@ public class Upload implements Runnable{
         this.server = server;
         this.usuario = usuario;
         this.ruta = ruta;
-        this.ruta.workingFOlder = pathlocal;
+        this.ruta.parentFolder = pathlocal;
         this.abs = this.ruta.toPath();
 
         this.lectorArchivos = new LectorArchivos(abs, "r", 999);

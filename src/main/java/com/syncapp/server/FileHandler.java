@@ -103,7 +103,7 @@ public class FileHandler {
 
         // Recorremos la ruta de trabajo para saber que archivos ya existen.
         fileList.forEach(c->{
-            Path fullPath = Paths.get(workingPath.toString() , c.ruta);
+            Path fullPath = Paths.get(workingPath.toString() , c.childFolder);
             int fileId = globalFileId++;
 
             pathFromFileID.put(""+fileId, fullPath.toString());

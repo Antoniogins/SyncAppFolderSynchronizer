@@ -6,7 +6,8 @@ import java.io.Serializable;
 /**
  * Esta clase representa el modelo de un bloque de bytes de un archivo. Para ello, tiene ciertos parametros, que
  * permite transferir el archivo en una secuencia de bloques, de forma sencilla. Ademas contine un identificador de
- * archivo, lo que permite que no se pierda el bloque.
+ * archivo, lo que permite que no se pierda el bloque. Se trata, en esencia, una encapsulacion para facilitar el
+ * trabajo de bloques.
  */
 public class BloqueBytes implements Serializable{
 
@@ -45,5 +46,17 @@ public class BloqueBytes implements Serializable{
 
         return "[file=" + VariablesGlobales.COLOR_MAGENTA + fileID + VariablesGlobales.COLOR_WHITE + ",pos=" + position +
                 ",size=" + VariablesGlobales.COLOR_MAGENTA + sizeText + VariablesGlobales.COLOR_WHITE + "]";
+    }
+
+
+
+
+
+    public void keepOnlyNBytes(int numberOfBytesToKeep){
+        if(numberOfBytesToKeep >= 0 && numberOfBytesToKeep < VariablesGlobales.MAX_BYTES_IN_BLOCK) {
+            byte[] temp = new byte[numberOfBytesToKeep];
+            System.arraycopy(data, 0, temp, 0, numberOfBytesToKeep);
+            data = temp;
+        }
     }
 }

@@ -1,7 +1,6 @@
 package com.syncapp.server;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.Naming;
@@ -11,7 +10,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
-import com.syncapp.cliente.SyncAppCliente;
 import com.syncapp.interfaces.SyncApp;
 import com.syncapp.model.BloqueBytes;
 import com.syncapp.model.Archivo;
@@ -228,7 +226,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
         if(!userHandler.isSessionActive(usuario.session_id)) { return -1; }
 
         // Obtenemos el path absoluto dentro del archivo, dentro del servidor
-        Path filepath = usersContainers.resolve(usuario.name).resolve(archivo.ruta);
+        Path filepath = usersContainers.resolve(usuario.name).resolve(archivo.childFolder);
 
 
 
@@ -390,7 +388,7 @@ public class SyncAppServer extends UnicastRemoteObject implements SyncApp{
      */
     @Override
     public String calcularHash(Archivo acalcular, TokenUsuario usuario) throws RemoteException {
-        acalcular.workingFOlder = usersContainers.resolve(usuario.name).toString();
+        acalcular.parentFolder = usersContainers.resolve(usuario.name).toString();
         return Utilidades.checkSumhash(acalcular.toFile());
     }
 

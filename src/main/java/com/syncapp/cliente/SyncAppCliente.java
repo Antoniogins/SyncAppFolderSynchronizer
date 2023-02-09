@@ -561,7 +561,7 @@ public class SyncAppCliente {
             lr.setLocal(c);
 
             // Añadimos la pareja de valores al mapa
-            presencia.put(c.ruta, lr);
+            presencia.put(c.childFolder, lr);
         });
 
 
@@ -572,7 +572,7 @@ public class SyncAppCliente {
         remota.forEach(c -> {
 
             // Obtenemos la ruta relativa
-            String rutaRelativa = c.ruta;
+            String rutaRelativa = c.childFolder;
 
 
             // Si el LocalRemote para este archivo ya existia, lo obtenemos y añadimos el archivo remoto
